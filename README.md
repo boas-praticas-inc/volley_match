@@ -72,3 +72,9 @@ A persistencia pode seguir diretamente para SQLite no Android, sem a necessidade
 flutter pub get
 flutter run -d android
 ```
+## Integrantes
+
+- Kauan Brilhante
+- Leandro Carvalho
+- Matheus Calixto
+- Paulo Henrique
