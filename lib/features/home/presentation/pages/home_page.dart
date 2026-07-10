@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:volley_match/features/home/presentation/widgets/home_recent_matches_section.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_routes.dart';
@@ -29,42 +30,11 @@ class HomePage extends StatelessWidget {
             },
           ),
           const SizedBox(height: 20),
-          FeatureCard(
-            title: 'Jogadores',
-            description: 'Cadastro da base de atletas.',
-            icon: Icons.group_outlined,
-            onTap: () => Navigator.of(context).pushNamed(AppRoutes.players),
-          ),
-          FeatureCard(
-            title: 'Sorteio de times',
-            description: 'Balanceamento a partir das notas.',
-            icon: Icons.shuffle_outlined,
-            onTap: () => Navigator.of(context).pushNamed(AppRoutes.teamDraw),
-          ),
-          FeatureCard(
-            title: 'Placar',
-            description: 'Pontos, sets e historico.',
-            icon: Icons.scoreboard_outlined,
-            onTap: () => Navigator.of(context).pushNamed(AppRoutes.scoreboard),
-          ),
-          FeatureCard(
-            title: 'Rotacoes',
-            description: 'Guia visual para 6x0 e 5x1.',
-            icon: Icons.sports_volleyball_outlined,
-            onTap: () =>
-                Navigator.of(context).pushNamed(AppRoutes.rotationGuide),
-          ),
-          FeatureCard(
-            title: 'Eventos',
-            description: 'Agrupamento das partidas do dia.',
-            icon: Icons.event_outlined,
-            onTap: () => Navigator.of(context).pushNamed(AppRoutes.events),
-          ),
-          FeatureCard(
-            title: 'Partidas',
-            description: 'Historico de confrontos e resultados.',
-            icon: Icons.emoji_events_outlined,
-            onTap: () => Navigator.of(context).pushNamed(AppRoutes.matches),
+          HomeRecentMatchesSection(
+            matches: viewModel.recentMatches,
+            onSeeAllTap: () {
+              Navigator.of(context).pushNamed(AppRoutes.matches);
+            },
           ),
         ],
       ),
