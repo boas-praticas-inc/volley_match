@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:volley_match/shared/widgets/feature_navBar.dart';
 
-import '../../../../shared/widgets/feature_navBar.dart';
 import '../../../../shared/widgets/feature_placeholder_section.dart';
 import '../viewmodels/scoreboard_viewmodel.dart';
 
