@@ -3,7 +3,6 @@ import 'package:volley_match/features/home/presentation/widgets/home_recent_matc
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_routes.dart';
-import '../../../../shared/widgets/feature_card.dart';
 import '../../../../shared/widgets/feature_navBar.dart';
 import '../viewmodels/home_viewmodel.dart';
 import '../widgets/home_quick_actions.dart';
