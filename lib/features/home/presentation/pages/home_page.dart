@@ -5,7 +5,7 @@ import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/feature_card.dart';
 import '../../../../shared/widgets/feature_navBar.dart';
 import '../viewmodels/home_viewmodel.dart';
-import '../widgets/home_header.dart';
+import '../widgets/home_quick_actions.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -20,31 +20,13 @@ class HomePage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          const HomeHeader(
-            title: 'Bem-vindo(a)!',
-            subtitle: 'Organize sorteios, controle partidas e acompanhe a partida em um só lugar',
-          ),
-          const SizedBox(height: 20),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Base inicial do projeto',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  const SizedBox(height: 12),
-                  ...viewModel.highlights.map(
-                    (item) => Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: Text('- $item'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
+          HomeQuickActions(
+            onNewDrawTap: () {
+              Navigator.of(context).pushNamed(AppRoutes.teamDraw);
+            },
+            onStartMatchTap: () {
+              Navigator.of(context).pushNamed(AppRoutes.scoreboard);
+            },
           ),
           const SizedBox(height: 20),
           FeatureCard(
