@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
+
 class HomeQuickActions extends StatelessWidget{
   const HomeQuickActions({
     super.key,
@@ -20,7 +22,7 @@ class HomeQuickActions extends StatelessWidget{
             onTap: onNewDrawTap,
             child: Ink(
               decoration: BoxDecoration(
-                color: const Color(0xFF2F5BEA),
+                color: AppColors.quickActionDraw,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Padding(
@@ -32,7 +34,7 @@ class HomeQuickActions extends StatelessWidget{
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
+                        color: AppColors.quickActionOverlay,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -70,7 +72,7 @@ class HomeQuickActions extends StatelessWidget{
             onTap: onStartMatchTap,
             child: Ink(
               decoration: BoxDecoration(
-                color: const Color(0xFFFF6A00),
+                color: AppColors.quickActionMatch,
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Padding(
@@ -82,7 +84,7 @@ class HomeQuickActions extends StatelessWidget{
                       width: 56,
                       height: 56,
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.18),
+                        color: AppColors.quickActionOverlay,
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(

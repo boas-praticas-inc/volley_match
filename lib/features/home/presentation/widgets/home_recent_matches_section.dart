@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import 'home_recent_match_item.dart';
 
 class HomeRecentMatchesSection extends StatelessWidget {
@@ -48,16 +49,16 @@ class _RecentMatchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final badgeBackground =
-    match.isVictory ? const Color(0xFFDDF7E7) : const Color(0xFFFFE1E1);
+        match.isVictory ? AppColors.successBackground : AppColors.dangerBackground;
     final badgeTextColor =
-    match.isVictory ? const Color(0xFF1AA251) : const Color(0xFFFF4D4F);
+        match.isVictory ? AppColors.success : AppColors.danger;
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE6E8EE)),
+        border: Border.all(color: AppColors.borderLight),
       ),
       child: Row(
         children: [
@@ -68,7 +69,7 @@ class _RecentMatchCard extends StatelessWidget {
                 Text(
                   match.dateLabel,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: const Color(0xFF98A2B3),
+                    color: AppColors.textSubtle,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -82,7 +83,7 @@ class _RecentMatchCard extends StatelessWidget {
                 Text(
                   match.scoreLabel,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF667085),
+                    color: AppColors.textMuted,
                   ),
                 ),
               ],
