@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../shared/widgets/feature_navBar.dart';
 import '../../../../shared/widgets/feature_placeholder_section.dart';
 import '../viewmodels/team_draw_viewmodel.dart';
 
@@ -10,7 +11,8 @@ class TeamDrawPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewModel = TeamDrawViewModel();
 
-    return Scaffold(
+    return FeatureNavBar(
+      indiceAtual: 2,
       appBar: AppBar(title: const Text('Sorteio de times')),
       body: FeaturePlaceholderSection(
         title: 'Feature: Sorteio de times',

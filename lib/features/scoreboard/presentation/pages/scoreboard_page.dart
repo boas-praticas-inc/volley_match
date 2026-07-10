@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:volley_match/shared/widgets/feature_navBar.dart';
 
 import '../../../../shared/widgets/feature_placeholder_section.dart';
 import '../viewmodels/scoreboard_viewmodel.dart';
@@ -10,7 +11,8 @@ class ScoreboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewModel = ScoreboardViewModel();
 
-    return Scaffold(
+    return FeatureNavBar(
+      indiceAtual: 3,
       appBar: AppBar(title: const Text('Placar')),
       body: FeaturePlaceholderSection(
         title: 'Feature: Placar',
