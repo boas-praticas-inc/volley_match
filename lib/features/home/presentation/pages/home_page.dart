@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/feature_card.dart';
+import '../../../../shared/widgets/feature_navBar.dart';
 import '../viewmodels/home_viewmodel.dart';
 import '../widgets/home_header.dart';
 
@@ -13,14 +14,15 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewModel = HomeViewModel();
 
-    return Scaffold(
-      appBar: AppBar(title: const Text(AppStrings.appName)),
+    return FeatureNavBar(
+      indiceAtual: 0,
+      appBar: AppBar(title: Text(AppStrings.appName)),
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
           const HomeHeader(
-            title: AppStrings.appName,
-            subtitle: AppStrings.appTagline,
+            title: 'Bem-vindo(a)!',
+            subtitle: 'Organize sorteios, controle partidas e acompanhe a partida em um só lugar',
           ),
           const SizedBox(height: 20),
           Card(
