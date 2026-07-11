@@ -5,6 +5,7 @@ class AppColors {
   static const secondary = Color(0xFFF97316);
   static const background = Color(0xFFF8FAFC);
   static const surface = Color(0xFFFFFFFF);
+  static const textPrimary = Color(0xFF101828);
 
   static const quickActionDraw = Color(0xFF2563EB);
   static const quickActionMatch = Color(0xFFF97316);
@@ -17,5 +18,7 @@ class AppColors {
 
   static const textMuted = Color(0xFF667085);
   static const textSubtle = Color(0xFF98A2B3);
+  static const surfaceMuted = Color(0xFFF2F4F7);
   static const borderLight = Color(0xFFE6E8EE);
+  static const borderDisabled = Color(0xFFD0D5DD);
 }

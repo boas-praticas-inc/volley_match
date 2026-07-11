@@ -1,0 +1,111 @@
+import 'package:flutter/material.dart';
+import 'package:volley_match/core/theme/app_colors.dart';
+
+import '../../domain/entities/player_entity.dart';
+
+class PlayerListItem extends StatelessWidget {
+  const PlayerListItem({
+    super.key,
+    required this.player,
+  });
+
+  final PlayerEntity player;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: const BoxDecoration(
+              color: AppColors.primary,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              _initialsFromName(player.name),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  player.name,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  player.position,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  children: List.generate(
+                    10,
+                    (index) => Padding(
+                      padding: const EdgeInsets.only(right: 4),
+                      child: Container(
+                        width: 10,
+                        height: 10,
+                        decoration: BoxDecoration(
+                          color: index < player.skillRating
+                              ? AppColors.primary
+                              : AppColors.borderDisabled,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            width: 48,
+            height: 48,
+            decoration: const BoxDecoration(
+              color: AppColors.surfaceMuted,
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              onPressed: () {},
+              icon: const Icon(
+                Icons.edit_outlined,
+                color: AppColors.textSubtle,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _initialsFromName(String name) {
+    final parts = name.trim().split(' ');
+    if (parts.length == 1) {
+      return parts.first.substring(0, 1).toUpperCase();
+    }
+
+    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
+        .toUpperCase();
+  }
+}
