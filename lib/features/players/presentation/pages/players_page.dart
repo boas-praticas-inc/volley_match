@@ -4,6 +4,7 @@ import 'package:volley_match/core/theme/app_colors.dart';
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/feature_navBar.dart';
 import '../../domain/entities/player_entity.dart';
+import 'edit_player_page.dart';
 import '../viewmodels/players_viewmodel.dart';
 import '../widgets/player_list_item.dart';
 import '../widgets/players_position_filters.dart';
@@ -36,13 +37,19 @@ class _PlayersPageState extends State<PlayersPage> {
   }
 
   Future<void> _openEditPlayerPage(PlayerEntity player) async {
-    final updatedPlayer = await Navigator.of(context).pushNamed(
+    final result = await Navigator.of(context).pushNamed(
       AppRoutes.editPlayer,
       arguments: player,
     );
 
-    if (updatedPlayer is PlayerEntity) {
-      viewModel.updatePlayer(updatedPlayer);
+    if (result is EditPlayerResult) {
+      if (result.updatedPlayer != null) {
+        viewModel.updatePlayer(result.updatedPlayer!);
+      }
+
+      if (result.removedPlayerId != null) {
+        viewModel.removePlayer(result.removedPlayerId!);
+      }
     }
   }
 

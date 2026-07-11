@@ -3,6 +3,22 @@ import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../domain/entities/player_entity.dart';
 
+class EditPlayerResult {
+  const EditPlayerResult._({
+    this.updatedPlayer,
+    this.removedPlayerId,
+  });
+
+  const EditPlayerResult.updated(PlayerEntity player)
+      : this._(updatedPlayer: player);
+
+  const EditPlayerResult.removed(int playerId)
+      : this._(removedPlayerId: playerId);
+
+  final PlayerEntity? updatedPlayer;
+  final int? removedPlayerId;
+}
+
 class EditPlayerPage extends StatefulWidget {
   const EditPlayerPage({super.key, required this.player});
 
@@ -56,13 +72,17 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
       photoPath: widget.player.photoPath,
     );
 
-    Navigator.of(context).pop(updatedPlayer);
+    Navigator.of(context).pop(EditPlayerResult.updated(updatedPlayer));
+  }
+
+  void _removePlayer() {
+    Navigator.of(context).pop(EditPlayerResult.removed(widget.player.id));
   }
 
   void _showPhotoPickerPlaceholder() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Seleção de foto será conectada na proxima iteracão.'),
+        content: Text('Seleção de foto será conectada na proxima iteração.'),
       ),
     );
   }
@@ -74,20 +94,6 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text(
-            'Atualize os dados do atleta',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Ajuste nome, posição e habilidade do jogador selecionado.',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.textMuted,
-            ),
-          ),
           const SizedBox(height: 24),
           Center(
             child: Stack(
@@ -225,6 +231,25 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
                 ),
               ),
               child: const Text('Salvar Alterações'),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Align(
+            alignment: Alignment.center,
+            child: FractionallySizedBox(
+              widthFactor: 0.66,
+              child: OutlinedButton(
+                onPressed: _removePlayer,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.danger,
+                  side: const BorderSide(color: AppColors.danger, width: 2),
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                ),
+                child: const Text('Remover Jogador'),
+              ),
             ),
           ),
         ],

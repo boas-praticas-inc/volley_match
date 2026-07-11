@@ -79,6 +79,11 @@ class PlayersViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void removePlayer(int playerId) {
+    _allPlayers.removeWhere((player) => player.id == playerId);
+    notifyListeners();
+  }
+
   void updateSearchQuery(String value) {
     _searchQuery = value;
     notifyListeners();
