@@ -23,6 +23,7 @@ class _PlayersPageState extends State<PlayersPage> {
   void initState() {
     super.initState();
     viewModel = PlayersViewModel();
+    viewModel.loadPlayers();
   }
 
   Future<void> _openAddPlayerPage() async {
@@ -32,7 +33,7 @@ class _PlayersPageState extends State<PlayersPage> {
     );
 
     if (newPlayer is PlayerEntity) {
-      viewModel.addPlayer(newPlayer);
+      await viewModel.addPlayer(newPlayer);
     }
   }
 
@@ -44,11 +45,11 @@ class _PlayersPageState extends State<PlayersPage> {
 
     if (result is EditPlayerResult) {
       if (result.updatedPlayer != null) {
-        viewModel.updatePlayer(result.updatedPlayer!);
+        await viewModel.updatePlayer(result.updatedPlayer!);
       }
 
       if (result.removedPlayerId != null) {
-        viewModel.removePlayer(result.removedPlayerId!);
+        await viewModel.removePlayer(result.removedPlayerId!);
       }
     }
   }
@@ -93,7 +94,11 @@ class _PlayersPageState extends State<PlayersPage> {
                 ),
                 const SizedBox(height: 20),
                 Expanded(
-                  child: viewModel.players.isEmpty
+                  child: viewModel.isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : viewModel.errorMessage != null
+                      ? _PlayersErrorState(message: viewModel.errorMessage!)
+                      : viewModel.players.isEmpty
                       ? const _EmptyPlayersState()
                       : ListView.builder(
                           itemCount: viewModel.players.length,
@@ -114,6 +119,43 @@ class _PlayersPageState extends State<PlayersPage> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _PlayersErrorState extends StatelessWidget {
+  const _PlayersErrorState({required this.message});
+
+  final String message;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Erro ao carregar jogadores',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            message,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+          ),
+        ],
       ),
     );
   }

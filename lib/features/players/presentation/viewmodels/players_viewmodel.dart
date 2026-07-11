@@ -1,8 +1,13 @@
 import 'package:flutter/foundation.dart';
 
+import '../../data/repositories/players_repository_impl.dart';
 import '../../domain/entities/player_entity.dart';
+import '../../domain/repositories/players_repository.dart';
 
 class PlayersViewModel extends ChangeNotifier {
+  PlayersViewModel({PlayersRepository? repository})
+    : _repository = repository ?? PlayersRepositoryImpl();
+
   static const allPositions = [
     'Todos',
     'Ponteiro',
@@ -12,38 +17,19 @@ class PlayersViewModel extends ChangeNotifier {
     'Libero',
   ];
 
-  final List<PlayerEntity> _allPlayers = [
-    PlayerEntity(
-      id: 1,
-      name: 'Matheus',
-      skillRating: 8,
-      position: 'Levantador',
-    ),
-    PlayerEntity(
-      id: 2,
-      name: 'Bruno',
-      skillRating: 7,
-      position: 'Ponteiro',
-    ),
-    PlayerEntity(
-      id: 3,
-      name: 'Caio',
-      skillRating: 9,
-      position: 'Central',
-    ),
-    PlayerEntity(
-      id: 4,
-      name: 'Rafael',
-      skillRating: 6,
-      position: 'Libero',
-    ),
-  ];
+  final PlayersRepository _repository;
+
+  List<PlayerEntity> _allPlayers = [];
 
   String _searchQuery = '';
   String _selectedPosition = 'Todos';
+  bool _isLoading = false;
+  String? _errorMessage;
 
   String get selectedPosition => _selectedPosition;
   List<String> get positions => allPositions;
+  bool get isLoading => _isLoading;
+  String? get errorMessage => _errorMessage;
 
   List<PlayerEntity> get players {
     return _allPlayers.where((player) {
@@ -59,14 +45,47 @@ class PlayersViewModel extends ChangeNotifier {
   }
 
   int get totalPlayersCount => _allPlayers.length;
-  int get nextPlayerId => _allPlayers.length + 1;
 
-  void addPlayer(PlayerEntity player) {
-    _allPlayers.add(player);
-    notifyListeners();
+  int get nextPlayerId {
+    if (_allPlayers.isEmpty) {
+      return 1;
+    }
+
+    final maxId = _allPlayers
+        .map((player) => player.id)
+        .reduce((current, next) => current > next ? current : next);
+
+    return maxId + 1;
   }
 
-  void updatePlayer(PlayerEntity updatedPlayer) {
+  Future<void> loadPlayers() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _allPlayers = await _repository.getPlayers();
+    } catch (_) {
+      _errorMessage = 'Não foi possível carregar os jogadores.';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> addPlayer(PlayerEntity player) async {
+    try {
+      await _repository.addPlayer(player);
+      _allPlayers = await _repository.getPlayers();
+      _errorMessage = null;
+      notifyListeners();
+    } catch (_) {
+      _errorMessage = 'Não foi possível adicionar o jogador.';
+      notifyListeners();
+    }
+  }
+
+  Future<void> updatePlayer(PlayerEntity updatedPlayer) async {
     final playerIndex = _allPlayers.indexWhere(
       (player) => player.id == updatedPlayer.id,
     );
@@ -75,13 +94,27 @@ class PlayersViewModel extends ChangeNotifier {
       return;
     }
 
-    _allPlayers[playerIndex] = updatedPlayer;
-    notifyListeners();
+    try {
+      await _repository.updatePlayer(updatedPlayer);
+      _allPlayers = await _repository.getPlayers();
+      _errorMessage = null;
+      notifyListeners();
+    } catch (_) {
+      _errorMessage = 'Não foi possível atualizar o jogador.';
+      notifyListeners();
+    }
   }
 
-  void removePlayer(int playerId) {
-    _allPlayers.removeWhere((player) => player.id == playerId);
-    notifyListeners();
+  Future<void> removePlayer(int playerId) async {
+    try {
+      await _repository.removePlayer(playerId);
+      _allPlayers = await _repository.getPlayers();
+      _errorMessage = null;
+      notifyListeners();
+    } catch (_) {
+      _errorMessage = 'Não foi possível remover o jogador.';
+      notifyListeners();
+    }
   }
 
   void updateSearchQuery(String value) {
