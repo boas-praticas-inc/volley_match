@@ -56,6 +56,14 @@ class _AddPlayerPageState extends State<AddPlayerPage> {
     Navigator.of(context).pop(player);
   }
 
+  void _showPhotoPickerPlaceholder() {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Selecao de foto sera conectada na proxima iteracao.'),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,6 +86,48 @@ class _AddPlayerPageState extends State<AddPlayerPage> {
             ),
           ),
           const SizedBox(height: 24),
+          Center(
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: 112,
+                  height: 112,
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceMuted,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.borderLight),
+                  ),
+                  child: const Icon(
+                    Icons.person_outline,
+                    size: 48,
+                    color: AppColors.textSubtle,
+                  ),
+                ),
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: Material(
+                    color: AppColors.primary,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: _showPhotoPickerPlaceholder,
+                      child: const Padding(
+                        padding: EdgeInsets.all(10),
+                        child: Icon(
+                          Icons.photo_camera_outlined,
+                          size: 18,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 28),
           TextField(
             controller: _nameController,
             textCapitalization: TextCapitalization.words,
@@ -87,28 +137,50 @@ class _AddPlayerPageState extends State<AddPlayerPage> {
             ),
           ),
           const SizedBox(height: 20),
-          DropdownButtonFormField<String>(
-            initialValue: _selectedPosition,
-            decoration: const InputDecoration(
-              labelText: 'Posicao',
+          Text(
+            'Posicao',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-            items: _positions
-                .map(
-                  (position) => DropdownMenuItem(
-                    value: position,
-                    child: Text(position),
-                  ),
-                )
-                .toList(),
-            onChanged: (value) {
-              if (value == null) {
-                return;
-              }
-
-              setState(() {
-                _selectedPosition = value;
-              });
-            },
+          ),
+          const SizedBox(height: 24),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppColors.surface,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppColors.borderLight),
+            ),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 12,
+              children: _positions
+                  .map(
+                    (position) => ChoiceChip(
+                      label: Text(position),
+                      selected: position == _selectedPosition,
+                      onSelected: (_) {
+                        setState(() {
+                          _selectedPosition = position;
+                        });
+                      },
+                      showCheckmark: false,
+                      labelStyle: TextStyle(
+                        color: position == _selectedPosition
+                            ? Colors.white
+                            : AppColors.textMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      backgroundColor: AppColors.surfaceMuted,
+                      selectedColor: AppColors.primary,
+                      side: BorderSide.none,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
           ),
           const SizedBox(height: 24),
           Text(

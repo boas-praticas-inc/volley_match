@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
+import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/feature_navBar.dart';
+import '../../domain/entities/player_entity.dart';
 import '../viewmodels/players_viewmodel.dart';
 import '../widgets/player_list_item.dart';
 import '../widgets/players_position_filters.dart';
@@ -22,13 +24,24 @@ class _PlayersPageState extends State<PlayersPage> {
     viewModel = PlayersViewModel();
   }
 
+  Future<void> _openAddPlayerPage() async {
+    final newPlayer = await Navigator.of(context).pushNamed(
+      AppRoutes.addPlayer,
+      arguments: viewModel.nextPlayerId,
+    );
+
+    if (newPlayer is PlayerEntity) {
+      viewModel.addPlayer(newPlayer);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FeatureNavBar(
       indiceAtual: 1,
       appBar: AppBar(title: const Text('Jogadores')),
       floatingActionButton: FloatingActionButton(
-        onPressed: () {},
+        onPressed: _openAddPlayerPage,
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),

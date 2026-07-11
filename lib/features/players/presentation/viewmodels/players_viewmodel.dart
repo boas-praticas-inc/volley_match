@@ -59,6 +59,12 @@ class PlayersViewModel extends ChangeNotifier {
   }
 
   int get totalPlayersCount => _allPlayers.length;
+  int get nextPlayerId => _allPlayers.length + 1;
+
+  void addPlayer(PlayerEntity player) {
+    _allPlayers.add(player);
+    notifyListeners();
+  }
 
   void updateSearchQuery(String value) {
     _searchQuery = value;
