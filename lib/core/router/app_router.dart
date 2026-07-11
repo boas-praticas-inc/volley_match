@@ -4,6 +4,8 @@ import '../../features/event/presentation/pages/event_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/match/presentation/pages/match_page.dart';
 import '../../features/players/presentation/pages/add_player_page.dart';
+import '../../features/players/presentation/pages/edit_player_page.dart';
+import '../../features/players/domain/entities/player_entity.dart';
 import '../../features/players/presentation/pages/players_page.dart';
 import '../../features/rotation_guide/presentation/pages/rotation_guide_page.dart';
 import '../../features/scoreboard/presentation/pages/scoreboard_page.dart';
@@ -21,6 +23,11 @@ class AppRouter {
         final nextPlayerId = settings.arguments as int;
         return MaterialPageRoute(
           builder: (_) => AddPlayerPage(nextPlayerId: nextPlayerId),
+        );
+      case AppRoutes.editPlayer:
+        final player = settings.arguments as PlayerEntity;
+        return MaterialPageRoute(
+          builder: (_) => EditPlayerPage(player: player),
         );
       case AppRoutes.teamDraw:
         return MaterialPageRoute(builder: (_) => const TeamDrawPage());

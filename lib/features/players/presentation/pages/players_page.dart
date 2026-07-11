@@ -35,6 +35,17 @@ class _PlayersPageState extends State<PlayersPage> {
     }
   }
 
+  Future<void> _openEditPlayerPage(PlayerEntity player) async {
+    final updatedPlayer = await Navigator.of(context).pushNamed(
+      AppRoutes.editPlayer,
+      arguments: player,
+    );
+
+    if (updatedPlayer is PlayerEntity) {
+      viewModel.updatePlayer(updatedPlayer);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FeatureNavBar(
@@ -84,7 +95,10 @@ class _PlayersPageState extends State<PlayersPage> {
 
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 16),
-                              child: PlayerListItem(player: player),
+                              child: PlayerListItem(
+                                player: player,
+                                onTap: () => _openEditPlayerPage(player),
+                              ),
                             );
                           },
                         ),

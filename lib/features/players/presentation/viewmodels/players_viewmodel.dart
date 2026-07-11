@@ -66,6 +66,19 @@ class PlayersViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void updatePlayer(PlayerEntity updatedPlayer) {
+    final playerIndex = _allPlayers.indexWhere(
+      (player) => player.id == updatedPlayer.id,
+    );
+
+    if (playerIndex == -1) {
+      return;
+    }
+
+    _allPlayers[playerIndex] = updatedPlayer;
+    notifyListeners();
+  }
+
   void updateSearchQuery(String value) {
     _searchQuery = value;
     notifyListeners();
