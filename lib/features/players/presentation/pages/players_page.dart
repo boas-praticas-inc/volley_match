@@ -48,40 +48,49 @@ class _PlayersPageState extends State<PlayersPage> {
       body: AnimatedBuilder(
         animation: viewModel,
         builder: (context, _) {
-          return ListView(
+          return Padding(
             padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
-            children: [
-              Text(
-                '${viewModel.totalPlayersCount} cadastrados',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(color: AppColors.textSubtle),
-              ),
-              const SizedBox(height: 20),
-              TextField(
-                onChanged: viewModel.updateSearchQuery,
-                decoration: const InputDecoration(
-                  hintText: 'Buscar jogador...',
-                  prefixIcon: Icon(Icons.search),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${viewModel.totalPlayersCount} cadastrados',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(color: AppColors.textSubtle),
                 ),
-              ),
-              const SizedBox(height: 16),
-              PlayersPositionFilters(
-                positions: viewModel.positions,
-                selectedPosition: viewModel.selectedPosition,
-                onSelected: viewModel.selectPosition,
-              ),
-              const SizedBox(height: 20),
-              if (viewModel.players.isEmpty)
-                const _EmptyPlayersState()
-              else
-                ...viewModel.players.map(
-                  (player) => Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: PlayerListItem(player: player),
+                const SizedBox(height: 20),
+                TextField(
+                  onChanged: viewModel.updateSearchQuery,
+                  decoration: const InputDecoration(
+                    hintText: 'Buscar jogador...',
+                    prefixIcon: Icon(Icons.search),
                   ),
                 ),
-            ],
+                const SizedBox(height: 16),
+                PlayersPositionFilters(
+                  positions: viewModel.positions,
+                  selectedPosition: viewModel.selectedPosition,
+                  onSelected: viewModel.selectPosition,
+                ),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: viewModel.players.isEmpty
+                      ? const _EmptyPlayersState()
+                      : ListView.builder(
+                          itemCount: viewModel.players.length,
+                          itemBuilder: (context, index) {
+                            final player = viewModel.players[index];
+
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 16),
+                              child: PlayerListItem(player: player),
+                            );
+                          },
+                        ),
+                ),
+              ],
+            ),
           );
         },
       ),
