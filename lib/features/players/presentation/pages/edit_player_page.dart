@@ -75,8 +75,39 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
     Navigator.of(context).pop(EditPlayerResult.updated(updatedPlayer));
   }
 
-  void _removePlayer() {
-    Navigator.of(context).pop(EditPlayerResult.removed(widget.player.id));
+  Future<void> _confirmRemovePlayer() async {
+    final shouldRemove = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Remover jogador'),
+          content: Text(
+            'Deseja remover ${widget.player.name} da base de jogadores?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.danger,
+              ),
+              child: const Text('Remover'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (shouldRemove == true) {
+      Navigator.of(context).pop(EditPlayerResult.removed(widget.player.id));
+    }
   }
 
   void _showPhotoPickerPlaceholder() {
@@ -239,7 +270,7 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
             child: FractionallySizedBox(
               widthFactor: 0.66,
               child: OutlinedButton(
-                onPressed: _removePlayer,
+                onPressed: _confirmRemovePlayer,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.danger,
                   side: const BorderSide(color: AppColors.danger, width: 2),
