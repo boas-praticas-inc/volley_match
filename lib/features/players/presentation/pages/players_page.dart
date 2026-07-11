@@ -6,13 +6,24 @@ import '../viewmodels/players_viewmodel.dart';
 import '../widgets/player_list_item.dart';
 import '../widgets/players_position_filters.dart';
 
-class PlayersPage extends StatelessWidget {
+class PlayersPage extends StatefulWidget {
   const PlayersPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final viewModel = PlayersViewModel();
+  State<PlayersPage> createState() => _PlayersPageState();
+}
 
+class _PlayersPageState extends State<PlayersPage> {
+  late final PlayersViewModel viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    viewModel = PlayersViewModel();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return FeatureNavBar(
       indiceAtual: 1,
       appBar: AppBar(title: const Text('Jogadores')),
@@ -21,30 +32,78 @@ class PlayersPage extends StatelessWidget {
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
+      body: AnimatedBuilder(
+        animation: viewModel,
+        builder: (context, _) {
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
+            children: [
+              Text(
+                '${viewModel.totalPlayersCount} cadastrados',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: AppColors.textSubtle),
+              ),
+              const SizedBox(height: 20),
+              TextField(
+                onChanged: viewModel.updateSearchQuery,
+                decoration: const InputDecoration(
+                  hintText: 'Buscar jogador...',
+                  prefixIcon: Icon(Icons.search),
+                ),
+              ),
+              const SizedBox(height: 16),
+              PlayersPositionFilters(
+                positions: viewModel.positions,
+                selectedPosition: viewModel.selectedPosition,
+                onSelected: viewModel.selectPosition,
+              ),
+              const SizedBox(height: 20),
+              if (viewModel.players.isEmpty)
+                const _EmptyPlayersState()
+              else
+                ...viewModel.players.map(
+                  (player) => Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: PlayerListItem(player: player),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _EmptyPlayersState extends StatelessWidget {
+  const _EmptyPlayersState();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${viewModel.players.length} cadastrados',
+            'Nenhum jogador encontrado',
             style: Theme.of(
               context,
-            ).textTheme.bodyLarge?.copyWith(color: AppColors.textSubtle),
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
-          const SizedBox(height: 20),
-          const TextField(
-            decoration: InputDecoration(
-              hintText: 'Buscar jogador...',
-              prefixIcon: Icon(Icons.search),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const PlayersPositionFilters(),
-          const SizedBox(height: 20),
-          ...viewModel.players.map(
-            (player) => Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: PlayerListItem(player: player),
-            ),
+          const SizedBox(height: 8),
+          Text(
+            'Tente ajustar a busca ou o filtro selecionado.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
           ),
         ],
       ),

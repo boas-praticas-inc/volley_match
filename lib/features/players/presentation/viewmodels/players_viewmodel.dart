@@ -3,7 +3,16 @@ import 'package:flutter/foundation.dart';
 import '../../domain/entities/player_entity.dart';
 
 class PlayersViewModel extends ChangeNotifier {
-  final List<PlayerEntity> players = const [
+  static const allPositions = [
+    'Todos',
+    'Ponteiro',
+    'Levantador',
+    'Central',
+    'Oposto',
+    'Libero',
+  ];
+
+  final List<PlayerEntity> _allPlayers = const [
     PlayerEntity(
       id: 1,
       name: 'Matheus',
@@ -29,4 +38,35 @@ class PlayersViewModel extends ChangeNotifier {
       position: 'Libero',
     ),
   ];
+
+  String _searchQuery = '';
+  String _selectedPosition = 'Todos';
+
+  String get selectedPosition => _selectedPosition;
+  List<String> get positions => allPositions;
+
+  List<PlayerEntity> get players {
+    return _allPlayers.where((player) {
+      final matchesSearch = player.name.toLowerCase().contains(
+        _searchQuery.toLowerCase(),
+      );
+
+      final matchesPosition =
+          _selectedPosition == 'Todos' || player.position == _selectedPosition;
+
+      return matchesSearch && matchesPosition;
+    }).toList();
+  }
+
+  int get totalPlayersCount => _allPlayers.length;
+
+  void updateSearchQuery(String value) {
+    _searchQuery = value;
+    notifyListeners();
+  }
+
+  void selectPosition(String position) {
+    _selectedPosition = position;
+    notifyListeners();
+  }
 }
