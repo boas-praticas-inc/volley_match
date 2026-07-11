@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../features/event/presentation/pages/event_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/match/presentation/pages/match_page.dart';
+import '../../features/players/presentation/pages/add_player_page.dart';
 import '../../features/players/presentation/pages/players_page.dart';
 import '../../features/rotation_guide/presentation/pages/rotation_guide_page.dart';
 import '../../features/scoreboard/presentation/pages/scoreboard_page.dart';
@@ -16,6 +17,11 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const HomePage());
       case AppRoutes.players:
         return MaterialPageRoute(builder: (_) => const PlayersPage());
+      case AppRoutes.addPlayer:
+        final nextPlayerId = settings.arguments as int;
+        return MaterialPageRoute(
+          builder: (_) => AddPlayerPage(nextPlayerId: nextPlayerId),
+        );
       case AppRoutes.teamDraw:
         return MaterialPageRoute(builder: (_) => const TeamDrawPage());
       case AppRoutes.scoreboard:

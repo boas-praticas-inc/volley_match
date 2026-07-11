@@ -12,7 +12,7 @@ class PlayersViewModel extends ChangeNotifier {
     'Libero',
   ];
 
-  final List<PlayerEntity> _allPlayers = const [
+  final List<PlayerEntity> _allPlayers = [
     PlayerEntity(
       id: 1,
       name: 'Matheus',
