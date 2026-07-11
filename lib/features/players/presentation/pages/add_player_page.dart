@@ -71,20 +71,6 @@ class _AddPlayerPageState extends State<AddPlayerPage> {
       body: ListView(
         padding: const EdgeInsets.all(20),
         children: [
-          Text(
-            'Novo atleta',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-              fontWeight: FontWeight.w800,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Preencha os dados principais para incluir o jogador na base.',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.textMuted,
-            ),
-          ),
           const SizedBox(height: 24),
           Center(
             child: Stack(
