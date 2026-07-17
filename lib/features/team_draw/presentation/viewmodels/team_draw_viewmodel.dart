@@ -8,6 +8,10 @@ class TeamDrawViewModel extends ChangeNotifier {
   TeamDrawViewModel({PlayersRepository? repository})
     : _repository = repository ?? PlayersRepositoryImpl();
 
+  static const int minimumPlayersPerTeam = 2;
+  static const int maximumPlayersPerTeam = 6;
+  static const int minimumSelectedPlayers = minimumPlayersPerTeam * 2;
+
   final PlayersRepository _repository;
 
   List<PlayerEntity> _players = [];
@@ -16,11 +20,53 @@ class TeamDrawViewModel extends ChangeNotifier {
   String? _errorMessage;
 
   List<PlayerEntity> get players => List.unmodifiable(_players);
+  List<PlayerEntity> get selectedPlayers {
+    return _players
+        .where((player) => _selectedPlayerIds.contains(player.id))
+        .toList();
+  }
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   int get totalPlayersCount => _players.length;
   int get selectedPlayersCount => _selectedPlayerIds.length;
-  bool get canDrawTeams => _selectedPlayerIds.isNotEmpty;
+  bool get hasMinimumPlayersSelected =>
+      selectedPlayersCount >= minimumSelectedPlayers;
+  bool get hasPlayersPerTeamOption => playersPerTeamOptions.isNotEmpty;
+  bool get isSelectionValid =>
+      hasMinimumPlayersSelected && hasPlayersPerTeamOption;
+  bool get canDrawTeams => isSelectionValid;
+  String? get selectionValidationMessage {
+    if (selectedPlayersCount == 0) {
+      return 'Selecione jogadores presentes para continuar.';
+    }
+
+    if (!hasMinimumPlayersSelected) {
+      return 'Selecione pelo menos 4 jogadores para formar 2 times.';
+    }
+
+    if (!hasPlayersPerTeamOption) {
+      return 'Nao ha configuracao possivel entre 2 e 6 jogadores por time.';
+    }
+
+    return null;
+  }
+
+  List<int> get playersPerTeamOptions {
+    if (!hasMinimumPlayersSelected) {
+      return [];
+    }
+
+    return List<int>.generate(
+      maximumPlayersPerTeam - minimumPlayersPerTeam + 1,
+      (index) => index + minimumPlayersPerTeam,
+    ).where((teamSize) {
+      final teamsCount = selectedPlayersCount ~/ teamSize;
+
+      return teamSize <= maximumPlayersPerTeam &&
+          selectedPlayersCount % teamSize == 0 &&
+          teamsCount >= 2;
+    }).toList();
+  }
 
   Future<void> loadPlayers() async {
     _isLoading = true;

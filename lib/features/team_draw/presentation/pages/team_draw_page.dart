@@ -28,6 +28,20 @@ class _TeamDrawPageState extends State<TeamDrawPage> {
     super.dispose();
   }
 
+  Future<void> _openTeamConfiguration() async {
+    final selectedPlayers = viewModel.selectedPlayers;
+    final playersPerTeamOptions = viewModel.playersPerTeamOptions;
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TeamConfigurationPage(
+          players: selectedPlayers,
+          playersPerTeamOptions: playersPerTeamOptions,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return FeatureNavBar(
@@ -72,15 +86,154 @@ class _TeamDrawPageState extends State<TeamDrawPage> {
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
-                    onPressed: viewModel.canDrawTeams ? () {} : null,
-                    icon: const Icon(Icons.casino_outlined),
-                    label: const Text('Sortear times'),
+                    onPressed: viewModel.canDrawTeams
+                        ? _openTeamConfiguration
+                        : null,
+                    icon: const Icon(Icons.arrow_forward_outlined),
+                    label: const Text('Definir jogadores por time'),
                   ),
                 ),
               ],
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class TeamConfigurationPage extends StatefulWidget {
+  const TeamConfigurationPage({
+    super.key,
+    required this.players,
+    required this.playersPerTeamOptions,
+  });
+
+  final List<PlayerEntity> players;
+  final List<int> playersPerTeamOptions;
+
+  @override
+  State<TeamConfigurationPage> createState() => _TeamConfigurationPageState();
+}
+
+class _TeamConfigurationPageState extends State<TeamConfigurationPage> {
+  late int selectedPlayersPerTeam;
+
+  @override
+  void initState() {
+    super.initState();
+    selectedPlayersPerTeam = widget.playersPerTeamOptions.first;
+  }
+
+  int get teamsCount => widget.players.length ~/ selectedPlayersPerTeam;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Configuracao dos times')),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: AppColors.borderLight),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${widget.players.length} jogadores validos para o sorteio',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Escolha quantos jogadores cada time tera. A quantidade de times sera calculada automaticamente.',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Opcoes permitidas: de 2 a 6 jogadores por time.',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Jogadores por time',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children: widget.playersPerTeamOptions.map((teamSize) {
+                final isSelected = teamSize == selectedPlayersPerTeam;
+
+                return ChoiceChip(
+                  label: Text('$teamSize por time'),
+                  selected: isSelected,
+                  onSelected: (_) {
+                    setState(() {
+                      selectedPlayersPerTeam = teamSize;
+                    });
+                  },
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: AppColors.borderLight),
+              ),
+              child: Text(
+                '${widget.players.length} jogadores selecionados -> $teamsCount times de $selectedPlayersPerTeam jogadores',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              'Jogadores selecionados',
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: ListView.builder(
+                itemCount: widget.players.length,
+                itemBuilder: (context, index) {
+                  final player = widget.players[index];
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: _SelectedPlayerPreviewCard(player: player),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -105,10 +258,77 @@ class _SelectionSummary extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            '${viewModel.selectedPlayersCount} / ${viewModel.totalPlayersCount} jogadore(s) selecionado(s)',
+            'Jogadores presentes',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '${viewModel.selectedPlayersCount} / ${viewModel.totalPlayersCount} jogador(es) selecionado(s)',
             style: Theme.of(
               context,
             ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            viewModel.selectionValidationMessage ??
+                'Selecao valida para definir jogadores por time.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: viewModel.isSelectionValid
+                  ? AppColors.success
+                  : AppColors.danger,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Regras: minimo de 4 jogadores selecionados e times com 2 a 6 jogadores.',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.textSubtle),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SelectedPlayerPreviewCard extends StatelessWidget {
+  const _SelectedPlayerPreviewCard({required this.player});
+
+  final PlayerEntity player;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  player.name,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Nota ${player.skillRating}',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+                ),
+              ],
+            ),
           ),
         ],
       ),
