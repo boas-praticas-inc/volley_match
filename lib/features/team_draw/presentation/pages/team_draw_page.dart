@@ -178,92 +178,59 @@ class _TeamConfigurationPageState extends State<TeamConfigurationPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Configuracao dos times')),
       body: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: AppColors.borderLight),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    '${widget.players.length} jogadores validos para o sorteio',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Escolha quantos jogadores cada time tera. A quantidade de times sera calculada automaticamente.',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Opcoes permitidas: de 2 a 6 jogadores por time.',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
             Text(
-              'Jogadores por time',
+              '${widget.players.length} jogadores escolhidos',
               style: Theme.of(
                 context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w800,
+              ),
             ),
-            const SizedBox(height: 12),
-            Wrap(
-              spacing: 12,
-              runSpacing: 12,
-              children: widget.playersPerTeamOptions.map((teamSize) {
-                final isSelected = teamSize == selectedPlayersPerTeam;
+            const SizedBox(height: 6),
+            Text(
+              '$teamsCount times de $selectedPlayersPerTeam jogadores',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(
+                color: AppColors.textMuted,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+            const SizedBox(height: 16),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: widget.playersPerTeamOptions.map((teamSize) {
+                  final isSelected = teamSize == selectedPlayersPerTeam;
 
-                return ChoiceChip(
-                  label: Text('$teamSize por time'),
-                  selected: isSelected,
-                  onSelected: (_) {
-                    setState(() {
-                      selectedPlayersPerTeam = teamSize;
-                    });
-                  },
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: AppColors.borderLight),
-              ),
-              child: Text(
-                '${widget.players.length} jogadores selecionados -> $teamsCount times de $selectedPlayersPerTeam jogadores',
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
-              ),
-            ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: _openDrawResult,
-                icon: const Icon(Icons.casino_outlined),
-                label: const Text('Gerar sorteio'),
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: ChoiceChip(
+                      label: Text('$teamSize por time'),
+                      selected: isSelected,
+                      onSelected: (_) {
+                        setState(() {
+                          selectedPlayersPerTeam = teamSize;
+                        });
+                      },
+                      showCheckmark: false,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : AppColors.textMuted,
+                        fontWeight: FontWeight.w600,
+                      ),
+                      backgroundColor: AppColors.surfaceMuted,
+                      selectedColor: AppColors.primary,
+                      side: BorderSide.none,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  );
+                }).toList(),
               ),
             ),
             const SizedBox(height: 20),
@@ -285,6 +252,15 @@ class _TeamConfigurationPageState extends State<TeamConfigurationPage> {
                     child: _SelectedPlayerPreviewCard(player: player),
                   );
                 },
+              ),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _openDrawResult,
+                icon: const Icon(Icons.casino_outlined),
+                label: const Text('Gerar sorteio'),
               ),
             ),
           ],
