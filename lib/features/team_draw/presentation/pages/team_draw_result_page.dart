@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../../players/domain/entities/player_entity.dart';
+import '../../domain/usecases/generate_balanced_teams_usecase.dart';
 import '../widgets/generated_team_card.dart';
 import '../widgets/team_draw_states.dart';
 
@@ -25,6 +26,8 @@ class TeamDrawResultPage extends StatefulWidget {
 
 class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
   final Random _random = Random();
+  final GenerateBalancedTeamsUseCase _generateBalancedTeamsUseCase =
+      GenerateBalancedTeamsUseCase();
   late List<List<PlayerEntity>> teams;
   late List<String> teamNames;
   String searchQuery = '';
@@ -40,35 +43,12 @@ class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
   }
 
   List<List<PlayerEntity>> _generateBalancedTeams() {
-    final shuffledPlayers = [...widget.players]..shuffle(_random);
-    shuffledPlayers.sort(
-      (left, right) => right.skillRating.compareTo(left.skillRating),
+    return _generateBalancedTeamsUseCase(
+      players: widget.players,
+      teamsCount: widget.teamsCount,
+      playersPerTeam: widget.playersPerTeam,
+      random: _random,
     );
-
-    final generatedTeams = List.generate(
-      widget.teamsCount,
-      (_) => <PlayerEntity>[],
-    );
-
-    var playerIndex = 0;
-    final startsForward = _random.nextBool();
-
-    for (var round = 0; round < widget.playersPerTeam; round++) {
-      final movesForward = round.isEven ? startsForward : !startsForward;
-      final teamIndexes = movesForward
-          ? List.generate(widget.teamsCount, (index) => index)
-          : List.generate(
-              widget.teamsCount,
-              (index) => widget.teamsCount - 1 - index,
-            );
-
-      for (final teamIndex in teamIndexes) {
-        generatedTeams[teamIndex].add(shuffledPlayers[playerIndex]);
-        playerIndex += 1;
-      }
-    }
-
-    return generatedTeams;
   }
 
   void _regenerateDraw() {
