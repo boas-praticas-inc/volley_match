@@ -1,9 +1,11 @@
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../../../shared/widgets/feature_navBar.dart';
+import '../../../players/presentation/widgets/players_position_filters.dart';
 import '../../../players/domain/entities/player_entity.dart';
 import '../viewmodels/team_draw_viewmodel.dart';
 
@@ -57,7 +59,37 @@ class _TeamDrawPageState extends State<TeamDrawPage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _SelectionSummary(viewModel: viewModel),
+                Text(
+                  '${viewModel.selectedPlayersCount} / ${viewModel.totalPlayersCount} selecionados',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyLarge?.copyWith(color: AppColors.textSubtle),
+                ),
+                if (!viewModel.isSelectionValid &&
+                    viewModel.selectionValidationMessage != null) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    viewModel.selectionValidationMessage!,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.danger,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 20),
+                TextField(
+                  onChanged: viewModel.updateSearchQuery,
+                  decoration: const InputDecoration(
+                    hintText: 'Buscar jogador...',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                PlayersPositionFilters(
+                  positions: viewModel.positions,
+                  selectedPosition: viewModel.selectedPosition,
+                  onSelected: viewModel.selectPosition,
+                ),
                 const SizedBox(height: 20),
                 Expanded(
                   child: viewModel.isLoading
@@ -494,22 +526,7 @@ class _GeneratedTeamPlayerRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: _avatarColorForPlayer(player.id),
-            shape: BoxShape.circle,
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            _initialsFromName(player.name),
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-        ),
+        _PlayerAvatar(player: player, size: 44),
         const SizedBox(width: 14),
         Expanded(
           child: Column(
@@ -553,93 +570,6 @@ class _GeneratedTeamPlayerRow extends StatelessWidget {
       ],
     );
   }
-
-  String _initialsFromName(String name) {
-    final parts = name
-        .trim()
-        .split(' ')
-        .where((part) => part.isNotEmpty)
-        .toList();
-
-    if (parts.isEmpty) {
-      return '?';
-    }
-
-    if (parts.length == 1) {
-      return parts.first.substring(0, 1).toUpperCase();
-    }
-
-    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
-        .toUpperCase();
-  }
-
-  Color _avatarColorForPlayer(int playerId) {
-    const colors = [
-      Color(0xFF2563EB),
-      Color(0xFF10B981),
-      Color(0xFFF97316),
-      Color(0xFF8B5CF6),
-      Color(0xFFEF4444),
-      Color(0xFF06B6D4),
-    ];
-
-    return colors[playerId % colors.length];
-  }
-}
-
-class _SelectionSummary extends StatelessWidget {
-  const _SelectionSummary({required this.viewModel});
-
-  final TeamDrawViewModel viewModel;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Jogadores presentes',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            '${viewModel.selectedPlayersCount} / ${viewModel.totalPlayersCount} jogador(es) selecionado(s)',
-            style: Theme.of(
-              context,
-            ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            viewModel.selectionValidationMessage ??
-                'Selecao valida para definir jogadores por time.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: viewModel.isSelectionValid
-                  ? AppColors.success
-                  : AppColors.danger,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Regras: minimo de 4 jogadores selecionados e times com 2 a 6 jogadores.',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: AppColors.textSubtle),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 class _SelectedPlayerPreviewCard extends StatelessWidget {
@@ -658,6 +588,8 @@ class _SelectedPlayerPreviewCard extends StatelessWidget {
       ),
       child: Row(
         children: [
+          _PlayerAvatar(player: player, size: 44),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -711,17 +643,14 @@ class _SelectablePlayerCard extends StatelessWidget {
               color: isSelected ? AppColors.primary : AppColors.borderLight,
               width: isSelected ? 1.5 : 1,
             ),
-          ),
-          child: Row(
-            children: [
-              Checkbox(
-                value: isSelected,
-                onChanged: (_) => onTap(),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+            child: Row(
+              children: [
+                _PlayerAvatar(player: player, size: 52),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       player.name,
@@ -753,16 +682,114 @@ class _SelectablePlayerCard extends StatelessWidget {
                             ),
                           ),
                         ),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                const SizedBox(width: 12),
+                Checkbox(
+                  value: isSelected,
+                  onChanged: (_) => onTap(),
+                ),
+              ],
+            ),
           ),
         ),
+    );
+  }
+}
+
+class _PlayerAvatar extends StatelessWidget {
+  const _PlayerAvatar({
+    required this.player,
+    required this.size,
+  });
+
+  final PlayerEntity player;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final photoPath = player.photoPath;
+    final hasPhoto = photoPath != null && photoPath.trim().isNotEmpty;
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: _avatarColorForPlayer(player.id),
+        shape: BoxShape.circle,
+      ),
+      clipBehavior: Clip.antiAlias,
+      alignment: Alignment.center,
+      child: hasPhoto
+          ? Image.file(
+              File(photoPath),
+              fit: BoxFit.cover,
+              width: size,
+              height: size,
+              errorBuilder: (_, _, _) => _AvatarFallback(
+                player: player,
+                size: size,
+              ),
+            )
+          : _AvatarFallback(player: player, size: size),
+    );
+  }
+
+  Color _avatarColorForPlayer(int playerId) {
+    const colors = [
+      Color(0xFF2563EB),
+      Color(0xFF10B981),
+      Color(0xFFF97316),
+      Color(0xFF8B5CF6),
+      Color(0xFFEF4444),
+      Color(0xFF06B6D4),
+    ];
+
+    return colors[playerId % colors.length];
+  }
+}
+
+class _AvatarFallback extends StatelessWidget {
+  const _AvatarFallback({
+    required this.player,
+    required this.size,
+  });
+
+  final PlayerEntity player;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      _initialsFromName(player.name),
+      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+        color: Colors.white,
+        fontWeight: FontWeight.w800,
+        fontSize: size * 0.32,
       ),
     );
+  }
+
+  String _initialsFromName(String name) {
+    final parts = name
+        .trim()
+        .split(' ')
+        .where((part) => part.isNotEmpty)
+        .toList();
+
+    if (parts.isEmpty) {
+      return '?';
+    }
+
+    if (parts.length == 1) {
+      return parts.first.substring(0, 1).toUpperCase();
+    }
+
+    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
+        .toUpperCase();
   }
 }
 

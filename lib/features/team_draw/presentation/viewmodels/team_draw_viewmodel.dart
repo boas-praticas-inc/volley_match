@@ -11,23 +11,46 @@ class TeamDrawViewModel extends ChangeNotifier {
   static const int minimumPlayersPerTeam = 2;
   static const int maximumPlayersPerTeam = 6;
   static const int minimumSelectedPlayers = minimumPlayersPerTeam * 2;
+  static const allPositions = [
+    'Todos',
+    'Ponteiro',
+    'Levantador',
+    'Central',
+    'Oposto',
+    'Libero',
+  ];
 
   final PlayersRepository _repository;
 
-  List<PlayerEntity> _players = [];
+  List<PlayerEntity> _allPlayers = [];
   final Set<int> _selectedPlayerIds = {};
+  String _searchQuery = '';
+  String _selectedPosition = 'Todos';
   bool _isLoading = false;
   String? _errorMessage;
 
-  List<PlayerEntity> get players => List.unmodifiable(_players);
+  String get selectedPosition => _selectedPosition;
+  List<String> get positions => allPositions;
+  List<PlayerEntity> get players {
+    return _allPlayers.where((player) {
+      final matchesSearch = player.name.toLowerCase().contains(
+        _searchQuery.toLowerCase(),
+      );
+
+      final matchesPosition =
+          _selectedPosition == 'Todos' || player.position == _selectedPosition;
+
+      return matchesSearch && matchesPosition;
+    }).toList();
+  }
   List<PlayerEntity> get selectedPlayers {
-    return _players
+    return _allPlayers
         .where((player) => _selectedPlayerIds.contains(player.id))
         .toList();
   }
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
-  int get totalPlayersCount => _players.length;
+  int get totalPlayersCount => _allPlayers.length;
   int get selectedPlayersCount => _selectedPlayerIds.length;
   bool get hasMinimumPlayersSelected =>
       selectedPlayersCount >= minimumSelectedPlayers;
@@ -74,10 +97,10 @@ class TeamDrawViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _players = await _repository.getPlayers();
+      _allPlayers = await _repository.getPlayers();
       _selectedPlayerIds
         ..clear()
-        ..addAll(_players.map((player) => player.id));
+        ..addAll(_allPlayers.map((player) => player.id));
     } catch (_) {
       _errorMessage = 'Nao foi possivel carregar os jogadores.';
     } finally {
@@ -97,6 +120,16 @@ class TeamDrawViewModel extends ChangeNotifier {
       _selectedPlayerIds.add(playerId);
     }
 
+    notifyListeners();
+  }
+
+  void updateSearchQuery(String value) {
+    _searchQuery = value;
+    notifyListeners();
+  }
+
+  void selectPosition(String position) {
+    _selectedPosition = position;
     notifyListeners();
   }
 }
