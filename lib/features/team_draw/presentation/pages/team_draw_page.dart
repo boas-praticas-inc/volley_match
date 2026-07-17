@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
@@ -127,6 +129,18 @@ class _TeamConfigurationPageState extends State<TeamConfigurationPage> {
 
   int get teamsCount => widget.players.length ~/ selectedPlayersPerTeam;
 
+  Future<void> _openDrawResult() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => TeamDrawResultPage(
+          players: widget.players,
+          teamsCount: teamsCount,
+          playersPerTeam: selectedPlayersPerTeam,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -211,6 +225,15 @@ class _TeamConfigurationPageState extends State<TeamConfigurationPage> {
                 ).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _openDrawResult,
+                icon: const Icon(Icons.casino_outlined),
+                label: const Text('Gerar sorteio'),
+              ),
+            ),
             const SizedBox(height: 20),
             Text(
               'Jogadores selecionados',
@@ -236,6 +259,331 @@ class _TeamConfigurationPageState extends State<TeamConfigurationPage> {
         ),
       ),
     );
+  }
+}
+
+class TeamDrawResultPage extends StatefulWidget {
+  const TeamDrawResultPage({
+    super.key,
+    required this.players,
+    required this.teamsCount,
+    required this.playersPerTeam,
+  });
+
+  final List<PlayerEntity> players;
+  final int teamsCount;
+  final int playersPerTeam;
+
+  @override
+  State<TeamDrawResultPage> createState() => _TeamDrawResultPageState();
+}
+
+class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
+  final Random _random = Random();
+  late List<List<PlayerEntity>> teams;
+
+  @override
+  void initState() {
+    super.initState();
+    teams = _generateBalancedTeams();
+  }
+
+  List<List<PlayerEntity>> _generateBalancedTeams() {
+    final shuffledPlayers = [...widget.players]..shuffle(_random);
+    shuffledPlayers.sort(
+      (left, right) => right.skillRating.compareTo(left.skillRating),
+    );
+
+    final generatedTeams = List.generate(
+      widget.teamsCount,
+      (_) => <PlayerEntity>[],
+    );
+
+    var playerIndex = 0;
+    final startsForward = _random.nextBool();
+
+    for (var round = 0; round < widget.playersPerTeam; round++) {
+      final movesForward = round.isEven ? startsForward : !startsForward;
+      final teamIndexes = movesForward
+          ? List.generate(widget.teamsCount, (index) => index)
+          : List.generate(
+              widget.teamsCount,
+              (index) => widget.teamsCount - 1 - index,
+            );
+
+      for (final teamIndex in teamIndexes) {
+        generatedTeams[teamIndex].add(shuffledPlayers[playerIndex]);
+        playerIndex += 1;
+      }
+    }
+
+    return generatedTeams;
+  }
+
+  void _regenerateDraw() {
+    setState(() {
+      teams = _generateBalancedTeams();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Resultado do sorteio')),
+      body: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Times',
+              style: Theme.of(
+                context,
+              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w800),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${widget.players.length} jogadores selecionados',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyLarge?.copyWith(color: AppColors.textSubtle),
+            ),
+            const SizedBox(height: 16),
+            Expanded(
+              child: ListView.builder(
+                itemCount: teams.length,
+                itemBuilder: (context, index) {
+                  final team = teams[index];
+
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: _GeneratedTeamCard(
+                      title: 'Time ${String.fromCharCode(65 + index)}',
+                      players: team,
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Fluxo de partida ainda nao implementado.'),
+                    ),
+                  );
+                },
+                child: const Text('Iniciar partida'),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton(
+                onPressed: _regenerateDraw,
+                child: const Text('Refazer sorteio'),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _GeneratedTeamCard extends StatelessWidget {
+  const _GeneratedTeamCard({
+    required this.title,
+    required this.players,
+  });
+
+  final String title;
+  final List<PlayerEntity> players;
+
+  double get averageSkillRating {
+    if (players.isEmpty) {
+      return 0;
+    }
+
+    final totalSkillRating = players.fold(
+      0,
+      (total, player) => total + player.skillRating,
+    );
+
+    return totalSkillRating / players.length;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.borderLight),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    'Media ${averageSkillRating.toStringAsFixed(1)}',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 2),
+            child: Column(
+              children: players
+                  .map(
+                    (player) => Padding(
+                      padding: const EdgeInsets.only(bottom: 18),
+                      child: _GeneratedTeamPlayerRow(player: player),
+                    ),
+                  )
+                  .toList(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _GeneratedTeamPlayerRow extends StatelessWidget {
+  const _GeneratedTeamPlayerRow({required this.player});
+
+  final PlayerEntity player;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: _avatarColorForPlayer(player.id),
+            shape: BoxShape.circle,
+          ),
+          alignment: Alignment.center,
+          child: Text(
+            _initialsFromName(player.name),
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                player.name,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                player.position,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        Row(
+          children: List.generate(
+            10,
+            (index) => Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(
+                  color: index < player.skillRating
+                      ? AppColors.primary
+                      : AppColors.borderDisabled,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _initialsFromName(String name) {
+    final parts = name
+        .trim()
+        .split(' ')
+        .where((part) => part.isNotEmpty)
+        .toList();
+
+    if (parts.isEmpty) {
+      return '?';
+    }
+
+    if (parts.length == 1) {
+      return parts.first.substring(0, 1).toUpperCase();
+    }
+
+    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
+        .toUpperCase();
+  }
+
+  Color _avatarColorForPlayer(int playerId) {
+    const colors = [
+      Color(0xFF2563EB),
+      Color(0xFF10B981),
+      Color(0xFFF97316),
+      Color(0xFF8B5CF6),
+      Color(0xFFEF4444),
+      Color(0xFF06B6D4),
+    ];
+
+    return colors[playerId % colors.length];
   }
 }
 
