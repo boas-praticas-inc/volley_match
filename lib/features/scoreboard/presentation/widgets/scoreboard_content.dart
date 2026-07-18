@@ -40,27 +40,17 @@ class PortraitScoreboard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Partida em andamento',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Set ${viewModel.currentSetNumber} / ${match.bestOfSets} | ${match.pointsPerSet} pontos',
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.textMuted,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          _MatchHeader(viewModel: viewModel),
           const SizedBox(height: 18),
           Expanded(
             child: ListView(
               children: [
                 _ScoreCard(viewModel: viewModel),
                 const SizedBox(height: 16),
-                _SetHistoryCard(match: match),
+                _SetHistoryCard(
+                  match: match,
+                  currentSetNumber: viewModel.currentSetNumber,
+                ),
                 const SizedBox(height: 16),
                 Row(
                   children: [
@@ -196,6 +186,111 @@ class _ScoreCard extends StatelessWidget {
   }
 }
 
+class _MatchHeader extends StatelessWidget {
+  const _MatchHeader({required this.viewModel});
+
+  final ScoreboardViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final match = viewModel.match!;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+      decoration: BoxDecoration(
+        color: AppColors.textPrimary,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1F101828),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _HeaderPill(
+            icon: Icons.schedule,
+            label: viewModel.formattedElapsedTime,
+            alignment: MainAxisAlignment.start,
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                Text(
+                  'Partida',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '${match.pointsPerSet} pontos',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Colors.white.withValues(alpha: 0.70),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _HeaderPill(
+            label: 'Set ${viewModel.currentSetNumber}/${match.bestOfSets}',
+            alignment: MainAxisAlignment.end,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderPill extends StatelessWidget {
+  const _HeaderPill({required this.label, required this.alignment, this.icon});
+
+  final String label;
+  final MainAxisAlignment alignment;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 102,
+      child: Row(
+        mainAxisAlignment: alignment,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: 0.13),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, size: 15, color: Colors.white),
+                  const SizedBox(width: 5),
+                ],
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _TeamScoreColumn extends StatelessWidget {
   const _TeamScoreColumn({
     required this.team,
@@ -307,9 +402,10 @@ class _ScoreControlButton extends StatelessWidget {
 }
 
 class _SetHistoryCard extends StatelessWidget {
-  const _SetHistoryCard({required this.match});
+  const _SetHistoryCard({required this.match, required this.currentSetNumber});
 
   final ScoreboardMatchEntity match;
+  final int currentSetNumber;
 
   @override
   Widget build(BuildContext context) {
@@ -325,45 +421,142 @@ class _SetHistoryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Sets',
+            'Sets da partida',
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 12),
-          if (match.completedSets.isEmpty)
-            Text(
-              'Nenhum set finalizado ainda.',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: AppColors.textMuted),
-            )
-          else
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: match.completedSets.map((set) {
-                final homeWon = set.winnerTeamId == match.homeTeam.id;
+          Row(
+            children: List.generate(match.bestOfSets, (index) {
+              final setNumber = index + 1;
+              final completedSet = _completedSetByNumber(setNumber);
 
-                return Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
+              return Expanded(
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    right: setNumber == match.bestOfSets ? 0 : 8,
                   ),
-                  decoration: BoxDecoration(
-                    color: AppColors.surfaceMuted,
-                    borderRadius: BorderRadius.circular(16),
+                  child: _SetMarker(
+                    setNumber: setNumber,
+                    completedSet: completedSet,
+                    match: match,
+                    isCurrent:
+                        completedSet == null && setNumber == currentSetNumber,
                   ),
-                  child: Text(
-                    'Set ${set.number}: ${set.homeScore} - ${set.awayScore}',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: homeWon ? AppColors.primary : AppColors.danger,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                );
-              }).toList(),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
+
+  ScoreboardSetEntity? _completedSetByNumber(int setNumber) {
+    for (final set in match.completedSets) {
+      if (set.number == setNumber) {
+        return set;
+      }
+    }
+
+    return null;
+  }
+}
+
+class _SetMarker extends StatelessWidget {
+  const _SetMarker({
+    required this.setNumber,
+    required this.completedSet,
+    required this.match,
+    required this.isCurrent,
+  });
+
+  final int setNumber;
+  final ScoreboardSetEntity? completedSet;
+  final ScoreboardMatchEntity match;
+  final bool isCurrent;
+
+  bool get isCompleted => completedSet != null;
+
+  Color get accentColor {
+    final set = completedSet;
+
+    if (set == null) {
+      return isCurrent ? AppColors.secondary : AppColors.textSubtle;
+    }
+
+    return set.winnerTeamId == match.homeTeam.id
+        ? AppColors.primary
+        : AppColors.danger;
+  }
+
+  IconData get icon {
+    if (isCompleted) {
+      return Icons.emoji_events_outlined;
+    }
+
+    if (isCurrent) {
+      return Icons.sports_score_outlined;
+    }
+
+    return Icons.radio_button_unchecked;
+  }
+
+  String get scoreLabel {
+    final set = completedSet;
+
+    if (set == null) {
+      return isCurrent ? 'em jogo' : 'pendente';
+    }
+
+    return '${set.homeScore}-${set.awayScore}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 98),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      decoration: BoxDecoration(
+        color: accentColor.withValues(alpha: isCurrent ? 0.14 : 0.10),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: accentColor.withValues(alpha: isCurrent ? 0.50 : 0.18),
+        ),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: isCompleted || isCurrent ? accentColor : Colors.white,
+              shape: BoxShape.circle,
             ),
+            child: Icon(
+              icon,
+              color: isCompleted || isCurrent ? Colors.white : accentColor,
+              size: 18,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Set $setNumber',
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            scoreLabel,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: accentColor,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
         ],
       ),
     );
@@ -537,20 +730,43 @@ class LandscapeScoreboard extends StatelessWidget {
         SafeArea(
           child: Align(
             alignment: Alignment.topCenter,
-            child: Container(
-              margin: const EdgeInsets.only(top: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 10),
-              decoration: BoxDecoration(
-                color: AppColors.textPrimary.withValues(alpha: 0.92),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                'Set ${viewModel.currentSetNumber} / ${match.bestOfSets}',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w800,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 10,
+                  ),
+                  decoration: BoxDecoration(
+                    color: AppColors.textPrimary.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.schedule, color: Colors.white, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        viewModel.formattedElapsedTime,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+                const SizedBox(height: 6),
+                Text(
+                  'Set ${viewModel.currentSetNumber} / ${match.bestOfSets}',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
             ),
           ),
         ),

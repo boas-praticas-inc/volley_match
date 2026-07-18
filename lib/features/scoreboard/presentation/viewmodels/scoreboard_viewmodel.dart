@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../data/repositories/scoreboard_repository_impl.dart';
@@ -17,6 +19,7 @@ class ScoreboardViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool _isSaving = false;
   String? _errorMessage;
+  Timer? _elapsedTimer;
 
   ScoreboardMatchEntity? get match => _match;
   int get homeScore => _homeScore;
@@ -27,6 +30,25 @@ class ScoreboardViewModel extends ChangeNotifier {
   bool get hasMatch => _match != null;
 
   int get currentSetNumber => (_match?.completedSets.length ?? 0) + 1;
+
+  String get formattedElapsedTime {
+    final activeMatch = _match;
+
+    if (activeMatch == null) {
+      return '00:00';
+    }
+
+    final elapsed = DateTime.now().difference(activeMatch.startedAt);
+    final hours = elapsed.inHours;
+    final minutes = elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds = elapsed.inSeconds.remainder(60).toString().padLeft(2, '0');
+
+    if (hours > 0) {
+      return '${hours.toString().padLeft(2, '0')}:$minutes:$seconds';
+    }
+
+    return '$minutes:$seconds';
+  }
 
   int get homeSetsWon {
     final activeMatch = _match;
@@ -116,6 +138,8 @@ class ScoreboardViewModel extends ChangeNotifier {
 
       if (_match == null) {
         _errorMessage = 'Nao foi possivel encontrar a partida atual.';
+      } else {
+        _startElapsedTimer();
       }
     } catch (_) {
       _errorMessage = 'Nao foi possivel carregar o placar.';
@@ -207,11 +231,25 @@ class ScoreboardViewModel extends ChangeNotifier {
         winnerTeamId: winnerTeamId,
       );
       _match = await _repository.getMatchScoreboard(activeMatch.matchId);
+      _elapsedTimer?.cancel();
     } catch (_) {
       _errorMessage = 'Nao foi possivel encerrar a partida.';
     } finally {
       _isSaving = false;
       notifyListeners();
     }
+  }
+
+  void _startElapsedTimer() {
+    _elapsedTimer?.cancel();
+    _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _elapsedTimer?.cancel();
+    super.dispose();
   }
 }

@@ -4,6 +4,7 @@ class ScoreboardMatchEntity {
     required this.eventId,
     required this.homeTeam,
     required this.awayTeam,
+    required this.startedAt,
     required this.bestOfSets,
     required this.setsToWin,
     required this.pointsPerSet,
@@ -15,6 +16,7 @@ class ScoreboardMatchEntity {
   final int eventId;
   final ScoreboardTeamEntity homeTeam;
   final ScoreboardTeamEntity awayTeam;
+  final DateTime startedAt;
   final int bestOfSets;
   final int setsToWin;
   final int pointsPerSet;

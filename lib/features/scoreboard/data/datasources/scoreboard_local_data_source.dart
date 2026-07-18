@@ -39,12 +39,24 @@ class ScoreboardLocalDataSource {
       eventId: match['event_id'] as int,
       homeTeam: teams[0],
       awayTeam: teams[1],
+      startedAt: _dateTimeFromMatch(match),
       bestOfSets: match['best_of_sets'] as int,
       setsToWin: match['sets_to_win'] as int,
       pointsPerSet: match['points_per_set'] as int,
       status: match['status'] as String,
       completedSets: completedSets,
     );
+  }
+
+  DateTime _dateTimeFromMatch(Map<String, Object?> match) {
+    final rawDate =
+        match['started_at'] ?? match['scheduled_at'] ?? match['created_at'];
+
+    if (rawDate is String) {
+      return DateTime.tryParse(rawDate) ?? DateTime.now();
+    }
+
+    return DateTime.now();
   }
 
   Future<void> saveCompletedSet({
