@@ -25,7 +25,7 @@ class HomePage extends StatelessWidget {
               Navigator.of(context).pushNamed(AppRoutes.teamDraw);
             },
             onStartMatchTap: () {
-              Navigator.of(context).pushNamed(AppRoutes.scoreboard);
+              Navigator.of(context).pushNamed(AppRoutes.teamDraw);
             },
           ),
           const SizedBox(height: 20),

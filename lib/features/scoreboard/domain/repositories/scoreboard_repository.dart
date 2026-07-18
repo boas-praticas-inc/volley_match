@@ -3,6 +3,8 @@ import '../entities/scoreboard_match_entity.dart';
 abstract class ScoreboardRepository {
   Future<ScoreboardMatchEntity?> getMatchScoreboard(int matchId);
 
+  Future<ScoreboardMatchEntity?> getActiveMatchScoreboard();
+
   Future<void> saveCompletedSet({
     required int matchId,
     required int setNumber,

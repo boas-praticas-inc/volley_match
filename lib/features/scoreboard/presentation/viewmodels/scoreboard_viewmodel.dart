@@ -123,21 +123,17 @@ class ScoreboardViewModel extends ChangeNotifier {
   }
 
   Future<void> loadMatch() async {
-    if (matchId == null) {
-      _errorMessage = 'Inicie uma partida a partir de um novo sorteio.';
-      notifyListeners();
-      return;
-    }
-
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _match = await _repository.getMatchScoreboard(matchId!);
+      _match = matchId == null
+          ? await _repository.getActiveMatchScoreboard()
+          : await _repository.getMatchScoreboard(matchId!);
 
       if (_match == null) {
-        _errorMessage = 'Nao foi possivel encontrar a partida atual.';
+        _errorMessage = 'Nenhuma partida em andamento encontrada.';
       } else {
         _startElapsedTimer();
       }

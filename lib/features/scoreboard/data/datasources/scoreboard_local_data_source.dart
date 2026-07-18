@@ -25,7 +25,31 @@ class ScoreboardLocalDataSource {
       return null;
     }
 
-    final match = matches.first;
+    return _scoreboardFromMatch(db, matches.first);
+  }
+
+  Future<ScoreboardMatchEntity?> getActiveMatchScoreboard() async {
+    final db = await _database;
+    final matches = await db.query(
+      DatabaseTables.matches,
+      where: 'status = ?',
+      whereArgs: ['in_progress'],
+      orderBy: 'datetime(started_at) DESC, id DESC',
+      limit: 1,
+    );
+
+    if (matches.isEmpty) {
+      return null;
+    }
+
+    return _scoreboardFromMatch(db, matches.first);
+  }
+
+  Future<ScoreboardMatchEntity?> _scoreboardFromMatch(
+    Database db,
+    Map<String, Object?> match,
+  ) async {
+    final matchId = match['id'] as int;
     final teams = await _getMatchTeams(db, matchId);
 
     if (teams.length < 2) {

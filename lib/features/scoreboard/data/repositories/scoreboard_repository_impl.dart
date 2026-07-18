@@ -14,6 +14,11 @@ class ScoreboardRepositoryImpl implements ScoreboardRepository {
   }
 
   @override
+  Future<ScoreboardMatchEntity?> getActiveMatchScoreboard() {
+    return _localDataSource.getActiveMatchScoreboard();
+  }
+
+  @override
   Future<void> saveCompletedSet({
     required int matchId,
     required int setNumber,

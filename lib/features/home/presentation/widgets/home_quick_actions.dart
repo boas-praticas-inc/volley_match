@@ -2,12 +2,12 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
-class HomeQuickActions extends StatelessWidget{
+class HomeQuickActions extends StatelessWidget {
   const HomeQuickActions({
     super.key,
     required this.onNewDrawTap,
     required this.onStartMatchTap,
-});
+  });
 
   final VoidCallback onNewDrawTap;
   final VoidCallback onStartMatchTap;
@@ -37,10 +37,7 @@ class HomeQuickActions extends StatelessWidget{
                         color: AppColors.quickActionOverlay,
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
-                        Icons.shuffle,
-                        color: Colors.white,
-                      ),
+                      child: const Icon(Icons.shuffle, color: Colors.white),
                     ),
                     const SizedBox(height: 20),
                     const Text(
@@ -54,10 +51,7 @@ class HomeQuickActions extends StatelessWidget{
                     const SizedBox(height: 6),
                     const Text(
                       'Sortear times',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                 ),
@@ -94,7 +88,7 @@ class HomeQuickActions extends StatelessWidget{
                     ),
                     const SizedBox(height: 20),
                     const Text(
-                      'Iniciar Partida',
+                      'Nova Partida',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -103,11 +97,8 @@ class HomeQuickActions extends StatelessWidget{
                     ),
                     const SizedBox(height: 6),
                     const Text(
-                      'Placar ao vivo',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                      'Sortear e jogar',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                 ),
@@ -118,5 +109,4 @@ class HomeQuickActions extends StatelessWidget{
       ],
     );
   }
-
 }
