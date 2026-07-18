@@ -4,7 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../../players/domain/entities/player_entity.dart';
+import '../../data/repositories/team_draw_repository_impl.dart';
+import '../../domain/entities/drawn_team_entity.dart';
+import '../../domain/repositories/team_draw_repository.dart';
 import '../../domain/usecases/generate_balanced_teams_usecase.dart';
+import '../../domain/usecases/save_draw_teams_usecase.dart';
 import '../widgets/generated_team_card.dart';
 import '../widgets/team_draw_states.dart';
 
@@ -28,18 +32,19 @@ class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
   final Random _random = Random();
   final GenerateBalancedTeamsUseCase _generateBalancedTeamsUseCase =
       GenerateBalancedTeamsUseCase();
-  late List<List<PlayerEntity>> teams;
-  late List<String> teamNames;
+  final TeamDrawRepository _teamDrawRepository = TeamDrawRepositoryImpl();
+  late final SaveDrawTeamsUseCase _saveDrawTeamsUseCase;
+  late List<DrawnTeamEntity> drawnTeams;
+  int? eventId;
+  bool isPersisting = false;
   String searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    teams = _generateBalancedTeams();
-    teamNames = List.generate(
-      widget.teamsCount,
-      (index) => 'Time ${String.fromCharCode(65 + index)}',
-    );
+    _saveDrawTeamsUseCase = SaveDrawTeamsUseCase(_teamDrawRepository);
+    drawnTeams = _buildDrawnTeams();
+    Future.microtask(_persistCurrentDraw);
   }
 
   List<List<PlayerEntity>> _generateBalancedTeams() {
@@ -51,59 +56,111 @@ class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
     );
   }
 
-  void _regenerateDraw() {
-    setState(() {
-      teams = _generateBalancedTeams();
+  List<DrawnTeamEntity> _buildDrawnTeams({List<String>? preservedNames}) {
+    final generatedTeams = _generateBalancedTeams();
+
+    return List.generate(generatedTeams.length, (index) {
+      final name = preservedNames != null && index < preservedNames.length
+          ? preservedNames[index]
+          : 'Time ${String.fromCharCode(65 + index)}';
+
+      return DrawnTeamEntity(name: name, players: generatedTeams[index]);
     });
   }
 
+  void _regenerateDraw() {
+    final preservedNames = drawnTeams.map((team) => team.name).toList();
+
+    setState(() {
+      drawnTeams = _buildDrawnTeams(preservedNames: preservedNames);
+    });
+
+    _persistCurrentDraw();
+  }
+
   Future<void> _editTeamName(int teamIndex) async {
-    final controller = TextEditingController(text: teamNames[teamIndex]);
+    final team = drawnTeams[teamIndex];
 
     final updatedName = await showDialog<String>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Editar nome do time'),
-          content: TextField(
-            controller: controller,
-            autofocus: true,
-            decoration: const InputDecoration(hintText: 'Nome do time'),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop(controller.text.trim());
-              },
-              child: const Text('Salvar'),
-            ),
-          ],
-        );
-      },
+      builder: (dialogContext) => _EditTeamNameDialog(initialName: team.name),
     );
-
-    controller.dispose();
 
     if (updatedName == null || updatedName.isEmpty) {
       return;
     }
 
     setState(() {
-      teamNames[teamIndex] = updatedName;
+      drawnTeams[teamIndex] = team.copyWith(name: updatedName);
     });
+
+    if (team.id == null) {
+      await _persistCurrentDraw();
+      return;
+    }
+
+    try {
+      await _teamDrawRepository.updateTeamName(
+        teamId: team.id!,
+        name: updatedName,
+      );
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Nao foi possivel salvar o nome do time.'),
+        ),
+      );
+    }
+  }
+
+  Future<void> _persistCurrentDraw() async {
+    if (mounted) {
+      setState(() {
+        isPersisting = true;
+      });
+    }
+
+    try {
+      final result = await _saveDrawTeamsUseCase(
+        teams: drawnTeams,
+        eventId: eventId,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        eventId = result.eventId;
+        drawnTeams = result.teams;
+        isPersisting = false;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      setState(() {
+        isPersisting = false;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nao foi possivel salvar o sorteio.')),
+      );
+    }
   }
 
   List<_TeamResultItem> get filteredTeams {
     final allTeams = List.generate(
-      teams.length,
+      drawnTeams.length,
       (index) => _TeamResultItem(
         index: index,
-        title: teamNames[index],
-        players: teams[index],
+        title: drawnTeams[index].name,
+        players: drawnTeams[index].players,
       ),
     );
 
@@ -191,7 +248,7 @@ class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
-                onPressed: _regenerateDraw,
+                onPressed: isPersisting ? null : _regenerateDraw,
                 child: const Text('Refazer sorteio'),
               ),
             ),
@@ -212,4 +269,53 @@ class _TeamResultItem {
   final int index;
   final String title;
   final List<PlayerEntity> players;
+}
+
+class _EditTeamNameDialog extends StatefulWidget {
+  const _EditTeamNameDialog({required this.initialName});
+
+  final String initialName;
+
+  @override
+  State<_EditTeamNameDialog> createState() => _EditTeamNameDialogState();
+}
+
+class _EditTeamNameDialogState extends State<_EditTeamNameDialog> {
+  late final TextEditingController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = TextEditingController(text: widget.initialName);
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Editar nome do time'),
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        decoration: const InputDecoration(hintText: 'Nome do time'),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(context).pop(controller.text.trim());
+          },
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
+  }
 }
