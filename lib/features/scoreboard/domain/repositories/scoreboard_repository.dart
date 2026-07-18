@@ -1,9 +1,19 @@
 import '../entities/scoreboard_match_entity.dart';
+import '../entities/live_score_entity.dart';
 
 abstract class ScoreboardRepository {
   Future<ScoreboardMatchEntity?> getMatchScoreboard(int matchId);
 
   Future<ScoreboardMatchEntity?> getActiveMatchScoreboard();
+
+  Future<LiveScoreEntity?> getLiveScore({
+    required int matchId,
+    required int setNumber,
+  });
+
+  Future<void> saveLiveScore(LiveScoreEntity liveScore);
+
+  Future<void> clearLiveScore(int matchId);
 
   Future<void> saveCompletedSet({
     required int matchId,

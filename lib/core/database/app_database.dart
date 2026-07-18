@@ -45,6 +45,10 @@ class AppDatabase {
         if (oldVersion < 4) {
           await _createScoreboardSchema(db);
         }
+
+        if (oldVersion < 5) {
+          await _createLiveScoreSchema(db);
+        }
       },
     );
   }
@@ -63,6 +67,7 @@ class AppDatabase {
     await _createTeamDrawSchema(db);
     await _createMatchSchema(db);
     await _createScoreboardSchema(db);
+    await _createLiveScoreSchema(db);
   }
 
   Future<void> _createTeamDrawSchema(Database db) async {
@@ -188,5 +193,18 @@ class AppDatabase {
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_sets_match_id ON ${DatabaseTables.sets}(match_id)',
     );
+  }
+
+  Future<void> _createLiveScoreSchema(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ${DatabaseTables.liveSets} (
+        match_id INTEGER PRIMARY KEY,
+        set_number INTEGER NOT NULL,
+        home_score INTEGER NOT NULL DEFAULT 0,
+        away_score INTEGER NOT NULL DEFAULT 0,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (match_id) REFERENCES ${DatabaseTables.matches}(id) ON DELETE CASCADE
+      )
+    ''');
   }
 }

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../data/repositories/scoreboard_repository_impl.dart';
+import '../../domain/entities/live_score_entity.dart';
 import '../../domain/entities/scoreboard_match_entity.dart';
 import '../../domain/repositories/scoreboard_repository.dart';
 
@@ -20,6 +21,7 @@ class ScoreboardViewModel extends ChangeNotifier {
   bool _isSaving = false;
   String? _errorMessage;
   Timer? _elapsedTimer;
+  Future<void> _liveScoreSaveQueue = Future.value();
 
   ScoreboardMatchEntity? get match => _match;
   int get homeScore => _homeScore;
@@ -135,6 +137,7 @@ class ScoreboardViewModel extends ChangeNotifier {
       if (_match == null) {
         _errorMessage = 'Nenhuma partida em andamento encontrada.';
       } else {
+        await _restoreLiveScore();
         _startElapsedTimer();
       }
     } catch (_) {
@@ -146,30 +149,42 @@ class ScoreboardViewModel extends ChangeNotifier {
   }
 
   void incrementHomeScore() {
+    if (_isSaving || matchWinnerTeamId != null) {
+      return;
+    }
+
     _homeScore += 1;
+    _enqueueLiveScoreSave();
     notifyListeners();
   }
 
   void decrementHomeScore() {
-    if (_homeScore == 0) {
+    if (_homeScore == 0 || _isSaving || matchWinnerTeamId != null) {
       return;
     }
 
     _homeScore -= 1;
+    _enqueueLiveScoreSave();
     notifyListeners();
   }
 
   void incrementAwayScore() {
+    if (_isSaving || matchWinnerTeamId != null) {
+      return;
+    }
+
     _awayScore += 1;
+    _enqueueLiveScoreSave();
     notifyListeners();
   }
 
   void decrementAwayScore() {
-    if (_awayScore == 0) {
+    if (_awayScore == 0 || _isSaving || matchWinnerTeamId != null) {
       return;
     }
 
     _awayScore -= 1;
+    _enqueueLiveScoreSave();
     notifyListeners();
   }
 
@@ -199,6 +214,8 @@ class ScoreboardViewModel extends ChangeNotifier {
         isTiebreak: currentSetNumber == activeMatch.bestOfSets,
       );
 
+      await _liveScoreSaveQueue;
+      await _repository.clearLiveScore(activeMatch.matchId);
       _homeScore = 0;
       _awayScore = 0;
       _match = await _repository.getMatchScoreboard(activeMatch.matchId);
@@ -226,6 +243,8 @@ class ScoreboardViewModel extends ChangeNotifier {
         matchId: activeMatch.matchId,
         winnerTeamId: winnerTeamId,
       );
+      await _liveScoreSaveQueue;
+      await _repository.clearLiveScore(activeMatch.matchId);
       _match = await _repository.getMatchScoreboard(activeMatch.matchId);
       _elapsedTimer?.cancel();
     } catch (_) {
@@ -241,6 +260,52 @@ class ScoreboardViewModel extends ChangeNotifier {
     _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       notifyListeners();
     });
+  }
+
+  Future<void> _restoreLiveScore() async {
+    final activeMatch = _match;
+
+    if (activeMatch == null) {
+      return;
+    }
+
+    final liveScore = await _repository.getLiveScore(
+      matchId: activeMatch.matchId,
+      setNumber: currentSetNumber,
+    );
+
+    if (liveScore == null) {
+      return;
+    }
+
+    _homeScore = liveScore.homeScore;
+    _awayScore = liveScore.awayScore;
+  }
+
+  Future<void> _saveLiveScore() async {
+    final activeMatch = _match;
+
+    if (activeMatch == null) {
+      return;
+    }
+
+    try {
+      await _repository.saveLiveScore(
+        LiveScoreEntity(
+          matchId: activeMatch.matchId,
+          setNumber: currentSetNumber,
+          homeScore: _homeScore,
+          awayScore: _awayScore,
+        ),
+      );
+    } catch (_) {
+      _errorMessage = 'Nao foi possivel salvar o placar parcial.';
+    }
+  }
+
+  void _enqueueLiveScoreSave() {
+    _liveScoreSaveQueue = _liveScoreSaveQueue.then((_) => _saveLiveScore());
+    unawaited(_liveScoreSaveQueue);
   }
 
   @override
