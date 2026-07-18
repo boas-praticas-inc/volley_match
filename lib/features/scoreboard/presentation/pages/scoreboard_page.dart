@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:volley_match/core/router/app_routes.dart';
 import 'package:volley_match/shared/widgets/feature_navBar.dart';
 
@@ -26,6 +27,7 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
 
   @override
   void dispose() {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     viewModel.dispose();
     super.dispose();
   }
@@ -40,12 +42,15 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
     );
   }
 
-  void _showExpandedScoreboardMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Vire o celular para usar o placar ampliado.'),
-      ),
-    );
+  Future<void> _openExpandedScoreboard() async {
+    await SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+  }
+
+  Future<void> _exitExpandedScoreboard() async {
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
 
   @override
@@ -56,7 +61,12 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
         return OrientationBuilder(
           builder: (context, orientation) {
             if (orientation == Orientation.landscape && viewModel.hasMatch) {
-              return Scaffold(body: LandscapeScoreboard(viewModel: viewModel));
+              return Scaffold(
+                body: LandscapeScoreboard(
+                  viewModel: viewModel,
+                  onExitExpanded: _exitExpandedScoreboard,
+                ),
+              );
             }
 
             return FeatureNavBar(
@@ -66,7 +76,9 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
                 viewModel: viewModel,
                 onNewDraw: _openNewDraw,
                 onRotationTap: _showRotationMessage,
-                onExpandedTap: _showExpandedScoreboardMessage,
+                onExpandedTap: () {
+                  _openExpandedScoreboard();
+                },
               ),
             );
           },

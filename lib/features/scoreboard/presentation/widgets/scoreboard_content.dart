@@ -33,52 +33,40 @@ class PortraitScoreboard extends StatelessWidget {
       );
     }
 
-    final match = viewModel.match!;
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _MatchHeader(viewModel: viewModel),
-          const SizedBox(height: 18),
-          Expanded(
-            child: ListView(
-              children: [
-                _ScoreCard(viewModel: viewModel),
-                const SizedBox(height: 16),
-                _SetHistoryCard(
-                  match: match,
-                  currentSetNumber: viewModel.currentSetNumber,
+          const SizedBox(height: 12),
+          _ScoreCard(viewModel: viewModel),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: _SecondaryScoreboardButton(
+                  icon: Icons.rotate_right_outlined,
+                  label: 'Ver rotacao',
+                  onTap: onRotationTap,
                 ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _SecondaryScoreboardButton(
-                        icon: Icons.rotate_right_outlined,
-                        label: 'Ver rotacao',
-                        onTap: onRotationTap,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _SecondaryScoreboardButton(
-                        icon: Icons.open_in_full_outlined,
-                        label: 'Placar ampliado',
-                        onTap: onExpandedTap,
-                      ),
-                    ),
-                  ],
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _SecondaryScoreboardButton(
+                  icon: Icons.open_in_full_outlined,
+                  label: 'Placar ampliado',
+                  onTap: onExpandedTap,
                 ),
-                if (viewModel.winnerName != null) ...[
-                  const SizedBox(height: 16),
-                  _WinnerCard(winnerName: viewModel.winnerName!),
-                ],
-              ],
-            ),
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
+          if (viewModel.winnerName != null) ...[
+            const SizedBox(height: 12),
+            _WinnerCard(winnerName: viewModel.winnerName!),
+          ],
+          const Spacer(),
+          const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
@@ -89,7 +77,7 @@ class PortraitScoreboard extends StatelessWidget {
               label: const Text('Proximo set'),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton(
@@ -128,56 +116,55 @@ class _ScoreCard extends StatelessWidget {
         ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(18, 18, 18, 14),
-            child: Row(
-              children: [
-                Expanded(
-                  child: _TeamScoreColumn(
-                    team: match.homeTeam,
-                    score: viewModel.homeScore,
-                    setsWon: viewModel.homeSetsWon,
-                    accentColor: AppColors.primary,
-                    onIncrement: viewModel.incrementHomeScore,
-                    onDecrement: viewModel.decrementHomeScore,
+            padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(
+                    child: _TeamScoreColumn(
+                      team: match.homeTeam,
+                      score: viewModel.homeScore,
+                      setsWon: viewModel.homeSetsWon,
+                      accentColor: AppColors.primary,
+                      onIncrement: viewModel.incrementHomeScore,
+                      onDecrement: viewModel.decrementHomeScore,
+                    ),
                   ),
-                ),
-                Container(width: 1, height: 194, color: AppColors.borderLight),
-                Expanded(
-                  child: _TeamScoreColumn(
-                    team: match.awayTeam,
-                    score: viewModel.awayScore,
-                    setsWon: viewModel.awaySetsWon,
-                    accentColor: AppColors.danger,
-                    onIncrement: viewModel.incrementAwayScore,
-                    onDecrement: viewModel.decrementAwayScore,
+                  Container(width: 1, color: AppColors.borderLight),
+                  Expanded(
+                    child: _TeamScoreColumn(
+                      team: match.awayTeam,
+                      score: viewModel.awayScore,
+                      setsWon: viewModel.awaySetsWon,
+                      accentColor: AppColors.danger,
+                      onIncrement: viewModel.incrementAwayScore,
+                      onDecrement: viewModel.decrementAwayScore,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-            decoration: const BoxDecoration(
-              color: AppColors.surfaceMuted,
+            padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.035),
               borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(26),
-                bottomRight: Radius.circular(26),
+                bottomLeft: const Radius.circular(26),
+                bottomRight: const Radius.circular(26),
+              ),
+              border: const Border(
+                top: BorderSide(color: AppColors.borderLight),
               ),
             ),
-            child: Text(
-              viewModel.canCloseSet
-                  ? 'Set pode ser fechado'
-                  : 'Feche o set quando alguem atingir ${match.pointsPerSet}+ pontos com 2 de vantagem',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: viewModel.canCloseSet
-                    ? AppColors.success
-                    : AppColors.textMuted,
-                fontWeight: FontWeight.w700,
-              ),
+            child: _SetHistoryStrip(
+              match: match,
+              currentSetNumber: viewModel.currentSetNumber,
             ),
           ),
         ],
@@ -401,55 +388,33 @@ class _ScoreControlButton extends StatelessWidget {
   }
 }
 
-class _SetHistoryCard extends StatelessWidget {
-  const _SetHistoryCard({required this.match, required this.currentSetNumber});
+class _SetHistoryStrip extends StatelessWidget {
+  const _SetHistoryStrip({required this.match, required this.currentSetNumber});
 
   final ScoreboardMatchEntity match;
   final int currentSetNumber;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Sets da partida',
-            style: Theme.of(
-              context,
-            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: List.generate(match.bestOfSets, (index) {
-              final setNumber = index + 1;
-              final completedSet = _completedSetByNumber(setNumber);
+    return Row(
+      children: List.generate(match.bestOfSets, (index) {
+        final setNumber = index + 1;
+        final completedSet = _completedSetByNumber(setNumber);
 
-              return Expanded(
-                child: Padding(
-                  padding: EdgeInsets.only(
-                    right: setNumber == match.bestOfSets ? 0 : 8,
-                  ),
-                  child: _SetMarker(
-                    setNumber: setNumber,
-                    completedSet: completedSet,
-                    match: match,
-                    isCurrent:
-                        completedSet == null && setNumber == currentSetNumber,
-                  ),
-                ),
-              );
-            }),
+        return Expanded(
+          child: Padding(
+            padding: EdgeInsets.only(
+              right: setNumber == match.bestOfSets ? 0 : 8,
+            ),
+            child: _SetMarker(
+              setNumber: setNumber,
+              completedSet: completedSet,
+              match: match,
+              isCurrent: completedSet == null && setNumber == currentSetNumber,
+            ),
           ),
-        ],
-      ),
+        );
+      }),
     );
   }
 
@@ -516,42 +481,41 @@ class _SetMarker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      constraints: const BoxConstraints(minHeight: 98),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      constraints: const BoxConstraints(minHeight: 64),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 8),
       decoration: BoxDecoration(
-        color: accentColor.withValues(alpha: isCurrent ? 0.14 : 0.10),
-        borderRadius: BorderRadius.circular(18),
+        color: isCurrent
+            ? accentColor.withValues(alpha: 0.14)
+            : isCompleted
+            ? Colors.white
+            : Colors.white.withValues(alpha: 0.72),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: accentColor.withValues(alpha: isCurrent ? 0.50 : 0.18),
+          color: accentColor.withValues(alpha: isCurrent ? 0.50 : 0.20),
         ),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Container(
-            width: 34,
-            height: 34,
-            decoration: BoxDecoration(
-              color: isCompleted || isCurrent ? accentColor : Colors.white,
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              icon,
-              color: isCompleted || isCurrent ? Colors.white : accentColor,
-              size: 18,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: accentColor, size: 16),
+              const SizedBox(width: 4),
+              Text(
+                'Set $setNumber',
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Set $setNumber',
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: AppColors.textMuted,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             scoreLabel,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: accentColor,
               fontWeight: FontWeight.w900,
@@ -576,15 +540,45 @@ class _SecondaryScoreboardButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: onTap,
-      icon: Icon(icon),
-      label: Text(label),
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.textPrimary,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        side: const BorderSide(color: AppColors.borderLight),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Ink(
+          height: 56,
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.borderLight),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.10),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 17, color: AppColors.primary),
+              ),
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -691,9 +685,14 @@ class NoActiveMatchState extends StatelessWidget {
 }
 
 class LandscapeScoreboard extends StatelessWidget {
-  const LandscapeScoreboard({super.key, required this.viewModel});
+  const LandscapeScoreboard({
+    super.key,
+    required this.viewModel,
+    required this.onExitExpanded,
+  });
 
   final ScoreboardViewModel viewModel;
+  final VoidCallback onExitExpanded;
 
   @override
   Widget build(BuildContext context) {
@@ -772,6 +771,15 @@ class LandscapeScoreboard extends StatelessWidget {
         ),
         SafeArea(
           child: Align(
+            alignment: Alignment.topLeft,
+            child: Padding(
+              padding: const EdgeInsets.only(left: 14, top: 12),
+              child: _LandscapeModeButton(onTap: onExitExpanded),
+            ),
+          ),
+        ),
+        SafeArea(
+          child: Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
               padding: const EdgeInsets.only(bottom: 18),
@@ -784,6 +792,49 @@ class LandscapeScoreboard extends StatelessWidget {
   }
 }
 
+class _LandscapeModeButton extends StatelessWidget {
+  const _LandscapeModeButton({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.14),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.stay_current_portrait_outlined,
+                color: Colors.white,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              Text(
+                'Vertical',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _LandscapePrimaryAction extends StatelessWidget {
   const _LandscapePrimaryAction({required this.viewModel});
 
@@ -791,17 +842,15 @@ class _LandscapePrimaryAction extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = viewModel.canFinishMatch
-        ? 'Encerrar partida'
-        : viewModel.canCloseSet
-        ? 'Proximo set'
-        : 'Aguardando fechamento do set';
+    if (!viewModel.canFinishMatch && !viewModel.canCloseSet) {
+      return const SizedBox.shrink();
+    }
+
+    final label = viewModel.canFinishMatch ? 'Encerrar partida' : 'Proximo set';
 
     final onPressed = viewModel.canFinishMatch
         ? viewModel.finishMatch
-        : viewModel.canCloseSet
-        ? viewModel.closeCurrentSet
-        : null;
+        : viewModel.closeCurrentSet;
 
     return FilledButton(
       onPressed: onPressed,
