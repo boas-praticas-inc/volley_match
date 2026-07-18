@@ -89,7 +89,7 @@ class _EventConfigurationPageState extends State<EventConfigurationPage> {
     });
 
     try {
-      await _startEventMatchUseCase(
+      final matchId = await _startEventMatchUseCase(
         EventMatchConfigurationEntity(
           eventId: widget.eventId,
           homeTeamId: selectedTeamIds[0],
@@ -109,7 +109,7 @@ class _EventConfigurationPageState extends State<EventConfigurationPage> {
       ).showSnackBar(const SnackBar(content: Text('Primeira partida criada.')));
 
       await Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => const ScoreboardPage()),
+        MaterialPageRoute(builder: (_) => ScoreboardPage(matchId: matchId)),
       );
     } catch (_) {
       if (!mounted) {

@@ -41,6 +41,10 @@ class AppDatabase {
         if (oldVersion < 3) {
           await _createMatchSchema(db);
         }
+
+        if (oldVersion < 4) {
+          await _createScoreboardSchema(db);
+        }
       },
     );
   }
@@ -58,6 +62,7 @@ class AppDatabase {
 
     await _createTeamDrawSchema(db);
     await _createMatchSchema(db);
+    await _createScoreboardSchema(db);
   }
 
   Future<void> _createTeamDrawSchema(Database db) async {
@@ -156,6 +161,32 @@ class AppDatabase {
     );
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_match_teams_match_id ON ${DatabaseTables.matchTeams}(match_id)',
+    );
+  }
+
+  Future<void> _createScoreboardSchema(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ${DatabaseTables.sets} (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        match_id INTEGER NOT NULL,
+        set_number INTEGER NOT NULL,
+        home_team_id INTEGER NOT NULL,
+        away_team_id INTEGER NOT NULL,
+        home_score INTEGER NOT NULL DEFAULT 0,
+        away_score INTEGER NOT NULL DEFAULT 0,
+        winner_team_id INTEGER,
+        is_tiebreak INTEGER NOT NULL DEFAULT 0,
+        finished_at TEXT,
+        FOREIGN KEY (match_id) REFERENCES ${DatabaseTables.matches}(id) ON DELETE CASCADE,
+        FOREIGN KEY (home_team_id) REFERENCES ${DatabaseTables.teams}(id) ON DELETE RESTRICT,
+        FOREIGN KEY (away_team_id) REFERENCES ${DatabaseTables.teams}(id) ON DELETE RESTRICT,
+        FOREIGN KEY (winner_team_id) REFERENCES ${DatabaseTables.teams}(id) ON DELETE SET NULL,
+        UNIQUE (match_id, set_number)
+      )
+    ''');
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_sets_match_id ON ${DatabaseTables.sets}(match_id)',
     );
   }
 }
