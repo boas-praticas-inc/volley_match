@@ -37,6 +37,10 @@ class AppDatabase {
         if (oldVersion < 2) {
           await _createTeamDrawSchema(db);
         }
+
+        if (oldVersion < 3) {
+          await _createMatchSchema(db);
+        }
       },
     );
   }
@@ -53,6 +57,7 @@ class AppDatabase {
     ''');
 
     await _createTeamDrawSchema(db);
+    await _createMatchSchema(db);
   }
 
   Future<void> _createTeamDrawSchema(Database db) async {
@@ -105,6 +110,52 @@ class AppDatabase {
     );
     await db.execute(
       'CREATE INDEX IF NOT EXISTS idx_player_teams_player_id ON ${DatabaseTables.playerTeams}(player_id)',
+    );
+  }
+
+  Future<void> _createMatchSchema(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ${DatabaseTables.matches} (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        event_id INTEGER NOT NULL,
+        scheduled_at TEXT,
+        started_at TEXT,
+        finished_at TEXT,
+        status TEXT NOT NULL DEFAULT 'scheduled',
+        winner_team_id INTEGER,
+        sets_to_win INTEGER NOT NULL DEFAULT 2,
+        best_of_sets INTEGER NOT NULL DEFAULT 3,
+        points_per_set INTEGER NOT NULL DEFAULT 25,
+        notes TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        FOREIGN KEY (event_id) REFERENCES ${DatabaseTables.events}(id) ON DELETE CASCADE,
+        FOREIGN KEY (winner_team_id) REFERENCES ${DatabaseTables.teams}(id) ON DELETE SET NULL
+      )
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ${DatabaseTables.matchTeams} (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        match_id INTEGER NOT NULL,
+        team_id INTEGER NOT NULL,
+        side TEXT NOT NULL,
+        draw_order INTEGER,
+        FOREIGN KEY (match_id) REFERENCES ${DatabaseTables.matches}(id) ON DELETE CASCADE,
+        FOREIGN KEY (team_id) REFERENCES ${DatabaseTables.teams}(id) ON DELETE RESTRICT,
+        UNIQUE (match_id, team_id),
+        UNIQUE (match_id, side)
+      )
+    ''');
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_matches_event_id ON ${DatabaseTables.matches}(event_id)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_matches_status ON ${DatabaseTables.matches}(status)',
+    );
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_match_teams_match_id ON ${DatabaseTables.matchTeams}(match_id)',
     );
   }
 }

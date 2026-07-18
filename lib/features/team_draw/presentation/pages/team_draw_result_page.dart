@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
+import '../../../event/presentation/pages/event_configuration_page.dart';
 import '../../../players/domain/entities/player_entity.dart';
 import '../../data/repositories/team_draw_repository_impl.dart';
 import '../../domain/entities/drawn_team_entity.dart';
@@ -66,6 +67,12 @@ class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
 
       return DrawnTeamEntity(name: name, players: generatedTeams[index]);
     });
+  }
+
+  bool get canStartMatch {
+    return !isPersisting &&
+        eventId != null &&
+        drawnTeams.every((team) => team.id != null);
   }
 
   void _regenerateDraw() {
@@ -154,6 +161,23 @@ class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
     }
   }
 
+  Future<void> _openEventConfiguration() async {
+    if (!canStartMatch) {
+      await _persistCurrentDraw();
+    }
+
+    if (!mounted || eventId == null) {
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            EventConfigurationPage(eventId: eventId!, teams: drawnTeams),
+      ),
+    );
+  }
+
   List<_TeamResultItem> get filteredTeams {
     final allTeams = List.generate(
       drawnTeams.length,
@@ -234,13 +258,7 @@ class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
             SizedBox(
               width: double.infinity,
               child: FilledButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Fluxo de partida ainda nao implementado.'),
-                    ),
-                  );
-                },
+                onPressed: isPersisting ? null : _openEventConfiguration,
                 child: const Text('Iniciar partida'),
               ),
             ),
