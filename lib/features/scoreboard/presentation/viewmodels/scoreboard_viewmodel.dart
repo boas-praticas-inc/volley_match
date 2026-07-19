@@ -239,14 +239,23 @@ class ScoreboardViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      await _repository.finishMatch(
+      final nextMatch = await _repository.finishMatch(
         matchId: activeMatch.matchId,
         winnerTeamId: winnerTeamId,
       );
       await _liveScoreSaveQueue;
       await _repository.clearLiveScore(activeMatch.matchId);
-      _match = await _repository.getMatchScoreboard(activeMatch.matchId);
-      _elapsedTimer?.cancel();
+      _homeScore = 0;
+      _awayScore = 0;
+      _match =
+          nextMatch ??
+          await _repository.getMatchScoreboard(activeMatch.matchId);
+
+      if (_match?.status == 'in_progress') {
+        _startElapsedTimer();
+      } else {
+        _elapsedTimer?.cancel();
+      }
     } catch (_) {
       _errorMessage = 'Nao foi possivel encerrar a partida.';
     } finally {

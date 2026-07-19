@@ -26,5 +26,8 @@ abstract class ScoreboardRepository {
     required bool isTiebreak,
   });
 
-  Future<void> finishMatch({required int matchId, required int winnerTeamId});
+  Future<ScoreboardMatchEntity?> finishMatch({
+    required int matchId,
+    required int winnerTeamId,
+  });
 }

@@ -70,7 +70,10 @@ class ScoreboardRepositoryImpl implements ScoreboardRepository {
   }
 
   @override
-  Future<void> finishMatch({required int matchId, required int winnerTeamId}) {
+  Future<ScoreboardMatchEntity?> finishMatch({
+    required int matchId,
+    required int winnerTeamId,
+  }) {
     return _localDataSource.finishMatch(
       matchId: matchId,
       winnerTeamId: winnerTeamId,
