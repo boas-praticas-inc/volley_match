@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../features/event/presentation/pages/event_page.dart';
+import '../../features/event/presentation/pages/events_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/match/presentation/pages/match_page.dart';
 import '../../features/players/presentation/pages/add_player_page.dart';
@@ -36,6 +37,8 @@ class AppRouter {
       case AppRoutes.rotationGuide:
         return MaterialPageRoute(builder: (_) => const RotationGuidePage());
       case AppRoutes.events:
+        return MaterialPageRoute(builder: (_) => const EventsPage());
+      case AppRoutes.eventDetails:
         final eventId = settings.arguments as int?;
         return MaterialPageRoute(builder: (_) => EventPage(eventId: eventId));
       case AppRoutes.matches:

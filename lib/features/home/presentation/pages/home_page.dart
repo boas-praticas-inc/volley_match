@@ -39,7 +39,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _openEvent(HomeRecentEventItem event) async {
     await Navigator.of(
       context,
-    ).pushNamed(AppRoutes.events, arguments: event.id);
+    ).pushNamed(AppRoutes.eventDetails, arguments: event.id);
     await viewModel.loadRecentEvents();
   }
 

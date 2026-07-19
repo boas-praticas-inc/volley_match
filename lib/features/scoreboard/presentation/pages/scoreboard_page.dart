@@ -37,7 +37,7 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
   }
 
   void _openEventProgress() {
-    Navigator.of(context).pushNamed(AppRoutes.events);
+    Navigator.of(context).pushNamed(AppRoutes.eventDetails);
   }
 
   void _showRotationMessage() {

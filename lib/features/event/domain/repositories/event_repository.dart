@@ -9,9 +9,13 @@ abstract class EventRepository {
 
   Future<EventProgressEntity?> getEventProgress(int eventId);
 
+  Future<List<RecentEventEntity>> getEvents();
+
   Future<List<RecentEventEntity>> getRecentEvents({int limit = 5});
 
   Future<void> updateEventName({required int eventId, required String name});
 
   Future<void> finishEvent(int eventId);
+
+  Future<void> deleteEvent(int eventId);
 }

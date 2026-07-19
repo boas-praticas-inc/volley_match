@@ -26,6 +26,11 @@ class EventRepositoryImpl implements EventRepository {
   }
 
   @override
+  Future<List<RecentEventEntity>> getEvents() {
+    return _localDataSource.getEvents();
+  }
+
+  @override
   Future<List<RecentEventEntity>> getRecentEvents({int limit = 5}) {
     return _localDataSource.getRecentEvents(limit: limit);
   }
@@ -38,5 +43,10 @@ class EventRepositoryImpl implements EventRepository {
   @override
   Future<void> finishEvent(int eventId) {
     return _localDataSource.finishEvent(eventId);
+  }
+
+  @override
+  Future<void> deleteEvent(int eventId) {
+    return _localDataSource.deleteEvent(eventId);
   }
 }

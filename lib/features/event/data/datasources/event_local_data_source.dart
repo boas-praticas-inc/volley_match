@@ -88,6 +88,16 @@ class EventLocalDataSource {
     return _buildEventProgress(db, events.first);
   }
 
+  Future<List<RecentEventEntity>> getEvents() async {
+    final db = await _database;
+    final events = await db.query(
+      DatabaseTables.events,
+      orderBy: 'datetime(updated_at) DESC, id DESC',
+    );
+
+    return _recentEventsFromRows(db, events);
+  }
+
   Future<List<RecentEventEntity>> getRecentEvents({int limit = 5}) async {
     final db = await _database;
     final events = await db.query(
@@ -98,6 +108,13 @@ class EventLocalDataSource {
       limit: limit,
     );
 
+    return _recentEventsFromRows(db, events);
+  }
+
+  Future<List<RecentEventEntity>> _recentEventsFromRows(
+    DatabaseExecutor db,
+    List<Map<String, Object?>> events,
+  ) async {
     final recentEvents = <RecentEventEntity>[];
 
     for (final event in events) {
@@ -169,6 +186,37 @@ class EventLocalDataSource {
       await transaction.update(
         DatabaseTables.events,
         {'status': 'finished', 'updated_at': now},
+        where: 'id = ?',
+        whereArgs: [eventId],
+      );
+    });
+  }
+
+  Future<void> deleteEvent(int eventId) async {
+    final db = await _database;
+
+    await db.transaction((transaction) async {
+      final eventMatches = await transaction.query(
+        DatabaseTables.matches,
+        columns: ['id'],
+        where: 'event_id = ?',
+        whereArgs: [eventId],
+      );
+
+      final matchIds = eventMatches.map((match) => match['id'] as int).toList();
+
+      if (matchIds.isNotEmpty) {
+        final placeholders = List.filled(matchIds.length, '?').join(', ');
+
+        await transaction.delete(
+          DatabaseTables.liveSets,
+          where: 'match_id IN ($placeholders)',
+          whereArgs: matchIds,
+        );
+      }
+
+      await transaction.delete(
+        DatabaseTables.events,
         where: 'id = ?',
         whereArgs: [eventId],
       );

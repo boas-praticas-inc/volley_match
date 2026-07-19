@@ -118,7 +118,7 @@ class _EventPageState extends State<EventPage> {
   @override
   Widget build(BuildContext context) {
     return FeatureNavBar(
-      indiceAtual: 3,
+      indiceAtual: 2,
       appBar: AppBar(
         title: const Text('Evento'),
         actions: [

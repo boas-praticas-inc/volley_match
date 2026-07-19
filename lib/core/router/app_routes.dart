@@ -7,5 +7,6 @@ class AppRoutes {
   static const scoreboard = '/scoreboard';
   static const rotationGuide = '/rotation-guide';
   static const events = '/events';
+  static const eventDetails = '/events/details';
   static const matches = '/matches';
 }

@@ -24,7 +24,7 @@ class FeatureNavBar extends StatelessWidget {
     final rota = switch (indice) {
       0 => AppRoutes.home,
       1 => AppRoutes.players,
-      2 => AppRoutes.teamDraw,
+      2 => AppRoutes.events,
       3 => AppRoutes.scoreboard,
       _ => AppRoutes.home,
     };
@@ -53,9 +53,9 @@ class FeatureNavBar extends StatelessWidget {
             label: 'Jogadores',
           ),
           NavigationDestination(
-            icon: Icon(Icons.casino_outlined),
-            selectedIcon: Icon(Icons.casino),
-            label: 'Sorteio',
+            icon: Icon(Icons.event_note_outlined),
+            selectedIcon: Icon(Icons.event_note),
+            label: 'Eventos',
           ),
           NavigationDestination(
             icon: Icon(Icons.emoji_events_outlined),
