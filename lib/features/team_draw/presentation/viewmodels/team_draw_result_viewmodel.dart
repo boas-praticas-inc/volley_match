@@ -40,11 +40,12 @@ class TeamDrawResultViewModel extends ChangeNotifier {
   bool _isPersisting = false;
   String _searchQuery = '';
   String? _errorMessage;
+  bool _isInitialized = false;
   bool _isDisposed = false;
 
   List<DrawnTeamEntity> get drawnTeams => List.unmodifiable(_drawnTeams);
   int? get eventId => _eventId;
-  bool get isPersisting => _isPersisting;
+  bool get isPersisting => !_isInitialized || _isPersisting;
   String? get errorMessage => _errorMessage;
 
   bool get canStartMatch {
@@ -75,6 +76,11 @@ class TeamDrawResultViewModel extends ChangeNotifier {
   }
 
   Future<void> initialize() async {
+    if (_isInitialized) {
+      return;
+    }
+
+    _isInitialized = true;
     _drawnTeams = _buildDrawnTeams();
     _notifyListeners();
 
@@ -137,6 +143,10 @@ class TeamDrawResultViewModel extends ChangeNotifier {
   }
 
   Future<void> persistCurrentDraw() async {
+    if (_isPersisting) {
+      return;
+    }
+
     _isPersisting = true;
     _errorMessage = null;
     _notifyListeners();

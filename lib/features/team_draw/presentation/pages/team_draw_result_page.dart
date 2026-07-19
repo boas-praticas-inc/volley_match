@@ -36,7 +36,13 @@ class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
       playersPerTeam: widget.playersPerTeam,
     );
     viewModel.addListener(_showErrorMessage);
-    viewModel.initialize();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+
+      viewModel.initialize();
+    });
   }
 
   @override
