@@ -9,12 +9,14 @@ class PortraitScoreboard extends StatelessWidget {
     super.key,
     required this.viewModel,
     required this.onNewDraw,
+    required this.onEventTap,
     required this.onRotationTap,
     required this.onExpandedTap,
   });
 
   final ScoreboardViewModel viewModel;
   final VoidCallback onNewDraw;
+  final VoidCallback onEventTap;
   final VoidCallback onRotationTap;
   final VoidCallback onExpandedTap;
 
@@ -46,16 +48,24 @@ class PortraitScoreboard extends StatelessWidget {
             children: [
               Expanded(
                 child: _SecondaryScoreboardButton(
+                  icon: Icons.timeline_outlined,
+                  label: 'Evento',
+                  onTap: onEventTap,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _SecondaryScoreboardButton(
                   icon: Icons.rotate_right_outlined,
-                  label: 'Ver rotacao',
+                  label: 'Rotacao',
                   onTap: onRotationTap,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
                 child: _SecondaryScoreboardButton(
                   icon: Icons.open_in_full_outlined,
-                  label: 'Placar ampliado',
+                  label: 'Ampliado',
                   onTap: onExpandedTap,
                 ),
               ),

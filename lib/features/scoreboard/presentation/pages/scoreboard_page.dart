@@ -36,6 +36,10 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
     Navigator.of(context).pushReplacementNamed(AppRoutes.teamDraw);
   }
 
+  void _openEventProgress() {
+    Navigator.of(context).pushNamed(AppRoutes.events);
+  }
+
   void _showRotationMessage() {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Guia de rotacao ainda nao integrado.')),
@@ -75,6 +79,7 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
               body: PortraitScoreboard(
                 viewModel: viewModel,
                 onNewDraw: _openNewDraw,
+                onEventTap: _openEventProgress,
                 onRotationTap: _showRotationMessage,
                 onExpandedTap: () {
                   _openExpandedScoreboard();

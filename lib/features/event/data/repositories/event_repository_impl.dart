@@ -1,4 +1,5 @@
 import '../../domain/entities/event_match_configuration_entity.dart';
+import '../../domain/entities/event_progress_entity.dart';
 import '../../domain/repositories/event_repository.dart';
 import '../datasources/event_local_data_source.dart';
 
@@ -11,5 +12,15 @@ class EventRepositoryImpl implements EventRepository {
   @override
   Future<int> startEventMatch(EventMatchConfigurationEntity configuration) {
     return _localDataSource.startEventMatch(configuration);
+  }
+
+  @override
+  Future<EventProgressEntity?> getActiveEventProgress() {
+    return _localDataSource.getActiveEventProgress();
+  }
+
+  @override
+  Future<void> finishEvent(int eventId) {
+    return _localDataSource.finishEvent(eventId);
   }
 }
