@@ -3,10 +3,7 @@ import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../../scoreboard/presentation/pages/scoreboard_page.dart';
 import '../../../team_draw/domain/entities/drawn_team_entity.dart';
-import '../../data/repositories/event_repository_impl.dart';
-import '../../domain/entities/event_match_configuration_entity.dart';
-import '../../domain/repositories/event_repository.dart';
-import '../../domain/usecases/start_event_match_usecase.dart';
+import '../viewmodels/event_configuration_viewmodel.dart';
 
 class EventConfigurationPage extends StatefulWidget {
   const EventConfigurationPage({
@@ -23,218 +20,161 @@ class EventConfigurationPage extends StatefulWidget {
 }
 
 class _EventConfigurationPageState extends State<EventConfigurationPage> {
-  final EventRepository _eventRepository = EventRepositoryImpl();
-  late final StartEventMatchUseCase _startEventMatchUseCase;
-  late final List<int> selectedTeamIds;
-  int selectedBestOfSets = 3;
-  int selectedPointsPerSet = 25;
-  bool isStarting = false;
-
-  static const bestOfSetsOptions = [1, 3, 5];
-  static const pointsPerSetOptions = [15, 21, 25];
+  late final EventConfigurationViewModel viewModel;
 
   @override
   void initState() {
     super.initState();
-    _startEventMatchUseCase = StartEventMatchUseCase(_eventRepository);
-    selectedTeamIds = widget.teams
-        .where((team) => team.id != null)
-        .take(2)
-        .map((team) => team.id!)
-        .toList();
+    viewModel = EventConfigurationViewModel(
+      eventId: widget.eventId,
+      teams: widget.teams,
+    );
   }
 
-  int get setsToWin => (selectedBestOfSets ~/ 2) + 1;
-
-  bool get canStartEvent {
-    return selectedTeamIds.length == 2 && !isStarting;
-  }
-
-  String get eventRuleMessage {
-    if (widget.teams.length == 2) {
-      return 'Com 2 times, eles permanecem jogando durante o evento.';
-    }
-
-    return 'Vencedor permanece em quadra, perdedor sai e o próximo time entra.';
-  }
-
-  void _toggleStartingTeam(DrawnTeamEntity team) {
-    final teamId = team.id;
-
-    if (teamId == null) {
-      return;
-    }
-
-    setState(() {
-      if (selectedTeamIds.contains(teamId)) {
-        selectedTeamIds.remove(teamId);
-        return;
-      }
-
-      if (selectedTeamIds.length == 2) {
-        selectedTeamIds.removeAt(0);
-      }
-
-      selectedTeamIds.add(teamId);
-    });
+  @override
+  void dispose() {
+    viewModel.dispose();
+    super.dispose();
   }
 
   Future<void> _startEvent() async {
-    if (!canStartEvent) {
+    final matchId = await viewModel.startEvent();
+
+    if (!mounted) {
       return;
     }
 
-    setState(() {
-      isStarting = true;
-    });
-
-    try {
-      final matchId = await _startEventMatchUseCase(
-        EventMatchConfigurationEntity(
-          eventId: widget.eventId,
-          homeTeamId: selectedTeamIds[0],
-          awayTeamId: selectedTeamIds[1],
-          bestOfSets: selectedBestOfSets,
-          setsToWin: setsToWin,
-          pointsPerSet: selectedPointsPerSet,
+    if (matchId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            viewModel.errorMessage ?? 'Não foi possível iniciar o evento.',
+          ),
         ),
       );
-
-      if (!mounted) {
-        return;
-      }
-
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Primeira partida criada.')));
-
-      await Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => ScoreboardPage(matchId: matchId)),
-      );
-    } catch (_) {
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        isStarting = false;
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Não foi possível iniciar o evento.')),
-      );
+      viewModel.clearErrorMessage();
+      return;
     }
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Primeira partida criada.')));
+
+    await Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => ScoreboardPage(matchId: matchId)),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Configurar evento')),
-      body: Padding(
-        padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${widget.teams.length} times sorteados',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              eventRuleMessage,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textMuted,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Text(
-              '${selectedTeamIds.length} / 2 times para comecar',
-              style: Theme.of(
-                context,
-              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: ListView(
-                children: [
-                  ...widget.teams.map((team) {
-                    final teamId = team.id;
-                    final isSelected =
-                        teamId != null && selectedTeamIds.contains(teamId);
-                    final selectedOrder = isSelected
-                        ? selectedTeamIds.indexOf(teamId) + 1
-                        : null;
-
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 12),
-                      child: _StartingTeamCard(
-                        team: team,
-                        isSelected: isSelected,
-                        selectedOrder: selectedOrder,
-                        onTap: () => _toggleStartingTeam(team),
+    return AnimatedBuilder(
+      animation: viewModel,
+      builder: (context, _) {
+        return Scaffold(
+          appBar: AppBar(title: const Text('Configurar evento')),
+          body: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${viewModel.teams.length} times sorteados',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  viewModel.eventRuleMessage,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: AppColors.textMuted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  '${viewModel.selectedTeamsCount} / 2 times para comecar',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Expanded(
+                  child: ListView(
+                    children: [
+                      ...viewModel.teams.map((team) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: _StartingTeamCard(
+                            team: team,
+                            isSelected: viewModel.isTeamSelected(team),
+                            selectedOrder: viewModel.selectedOrderForTeam(team),
+                            onTap: () => viewModel.toggleStartingTeam(team),
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 8),
+                      _ConfigurationSection(
+                        title: 'Sets por partida',
+                        children: EventConfigurationViewModel.bestOfSetsOptions
+                            .map((sets) {
+                              return _ConfigChoiceChip(
+                                label: 'Melhor de $sets',
+                                isSelected:
+                                    viewModel.selectedBestOfSets == sets,
+                                onSelected: () {
+                                  viewModel.selectBestOfSets(sets);
+                                },
+                              );
+                            })
+                            .toList(),
                       ),
-                    );
-                  }),
-                  const SizedBox(height: 8),
-                  _ConfigurationSection(
-                    title: 'Sets por partida',
-                    children: bestOfSetsOptions.map((sets) {
-                      return _ConfigChoiceChip(
-                        label: 'Melhor de $sets',
-                        isSelected: selectedBestOfSets == sets,
-                        onSelected: () {
-                          setState(() {
-                            selectedBestOfSets = sets;
-                          });
-                        },
-                      );
-                    }).toList(),
+                      const SizedBox(height: 18),
+                      _ConfigurationSection(
+                        title: 'Pontos por set',
+                        children: EventConfigurationViewModel
+                            .pointsPerSetOptions
+                            .map((points) {
+                              return _ConfigChoiceChip(
+                                label: '$points pontos',
+                                isSelected:
+                                    viewModel.selectedPointsPerSet == points,
+                                onSelected: () {
+                                  viewModel.selectPointsPerSet(points);
+                                },
+                              );
+                            })
+                            .toList(),
+                      ),
+                      const SizedBox(height: 18),
+                      _EventSummaryCard(
+                        selectedBestOfSets: viewModel.selectedBestOfSets,
+                        setsToWin: viewModel.setsToWin,
+                        pointsPerSet: viewModel.selectedPointsPerSet,
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 18),
-                  _ConfigurationSection(
-                    title: 'Pontos por set',
-                    children: pointsPerSetOptions.map((points) {
-                      return _ConfigChoiceChip(
-                        label: '$points pontos',
-                        isSelected: selectedPointsPerSet == points,
-                        onSelected: () {
-                          setState(() {
-                            selectedPointsPerSet = points;
-                          });
-                        },
-                      );
-                    }).toList(),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: viewModel.canStartEvent ? _startEvent : null,
+                    icon: viewModel.isStarting
+                        ? const SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.sports_volleyball_outlined),
+                    label: const Text('Iniciar primeira partida'),
                   ),
-                  const SizedBox(height: 18),
-                  _EventSummaryCard(
-                    selectedBestOfSets: selectedBestOfSets,
-                    setsToWin: setsToWin,
-                    pointsPerSet: selectedPointsPerSet,
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: canStartEvent ? _startEvent : null,
-                icon: isStarting
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.sports_volleyball_outlined),
-                label: const Text('Iniciar primeira partida'),
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
