@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
+import 'package:volley_match/shared/widgets/player_photo_avatar.dart';
 
 import '../../domain/entities/rotation_system_entity.dart';
 import '../../domain/services/rotation_calculator.dart';
@@ -351,22 +352,26 @@ class _PositionedPlayerBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final badgeWidth = (boardWidth * 0.11).clamp(72.0, 112.0);
-    const badgeHeight = 40.0;
+    final badgeWidth = (boardWidth * 0.12).clamp(82.0, 124.0);
+    const badgeHeight = 48.0;
 
     return Positioned(
       left: (spot.offset.dx * boardWidth) - (badgeWidth / 2),
       top: (spot.offset.dy * boardHeight) - (badgeHeight / 2),
       width: badgeWidth,
-      child: _PlayerBadge(position: spot.position),
+      child: _PlayerBadge(
+        position: spot.position,
+        accentColor: spot.isHome ? AppColors.primary : AppColors.danger,
+      ),
     );
   }
 }
 
 class _PlayerBadge extends StatelessWidget {
-  const _PlayerBadge({required this.position});
+  const _PlayerBadge({required this.position, required this.accentColor});
 
   final RotationCourtPositionEntity position;
+  final Color accentColor;
 
   @override
   Widget build(BuildContext context) {
@@ -390,33 +395,71 @@ class _PlayerBadge extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 3),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(999),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x2A101828),
-                blurRadius: 6,
-                offset: Offset(0, 2),
-              ),
-            ],
+        _PlayerNamePill(player: player, name: name, accentColor: accentColor),
+      ],
+    );
+  }
+}
+
+class _PlayerNamePill extends StatelessWidget {
+  const _PlayerNamePill({
+    required this.player,
+    required this.name,
+    required this.accentColor,
+  });
+
+  final RotationCourtPlayerEntity? player;
+  final String name;
+  final Color accentColor;
+
+  @override
+  Widget build(BuildContext context) {
+    final courtPlayer = player;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(4, 4, 7, 4),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(999),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x2A101828),
+            blurRadius: 6,
+            offset: Offset(0, 2),
           ),
-          child: Text(
-            name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: const Color(0xFF0E1A2D),
-              fontWeight: FontWeight.w900,
-              height: 1,
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          PlayerPhotoAvatar(
+            name: name,
+            size: 24,
+            photoPath: courtPlayer?.photoPath,
+            backgroundColor: courtPlayer == null
+                ? AppColors.textSubtle
+                : courtPlayer.isSetter
+                ? AppColors.secondary
+                : accentColor,
+            icon: courtPlayer == null ? Icons.person_outline : null,
+          ),
+          const SizedBox(width: 5),
+          Expanded(
+            child: Text(
+              name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.left,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: const Color(0xFF0E1A2D),
+                fontWeight: FontWeight.w900,
+                height: 1,
+              ),
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

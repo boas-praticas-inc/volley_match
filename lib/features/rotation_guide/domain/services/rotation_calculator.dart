@@ -275,6 +275,7 @@ class RotationCalculator {
       name: player.name,
       role: player.position,
       isSetter: isSetter,
+      photoPath: player.photoPath,
     );
   }
 
@@ -359,19 +360,26 @@ class RotationCourtPlayerEntity {
     required this.name,
     required this.role,
     required this.isSetter,
+    this.photoPath,
   });
 
   final int id;
   final String name;
   final String role;
   final bool isSetter;
+  final String? photoPath;
 
-  RotationCourtPlayerEntity copyWith({String? role, bool? isSetter}) {
+  RotationCourtPlayerEntity copyWith({
+    String? role,
+    bool? isSetter,
+    String? photoPath,
+  }) {
     return RotationCourtPlayerEntity(
       id: id,
       name: name,
       role: role ?? this.role,
       isSetter: isSetter ?? this.isSetter,
+      photoPath: photoPath ?? this.photoPath,
     );
   }
 }
