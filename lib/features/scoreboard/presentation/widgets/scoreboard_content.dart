@@ -411,7 +411,10 @@ class _SetHistoryStrip extends StatelessWidget {
               setNumber: setNumber,
               completedSet: completedSet,
               match: match,
-              isCurrent: completedSet == null && setNumber == currentSetNumber,
+              isCurrent:
+                  match.status != 'finished' &&
+                  completedSet == null &&
+                  setNumber == currentSetNumber,
             ),
           ),
         );
@@ -543,28 +546,43 @@ class _MatchControlCenter extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
         border: Border.all(color: AppColors.borderLight),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          _ControlActionButton(
-            icon: Icons.flag_rounded,
-            label: 'Fim',
-            color: AppColors.danger,
-            onTap: viewModel.canFinishMatch ? viewModel.finishMatch : null,
-          ),
-          _MainControlButton(
-            isPaused: viewModel.isPaused,
-            onTap: viewModel.canTogglePause ? viewModel.togglePause : null,
-          ),
-          _ControlActionButton(
-            icon: Icons.skip_next_rounded,
-            label: 'Set',
-            color: AppColors.primary,
-            onTap: viewModel.canCloseSet ? viewModel.closeCurrentSet : null,
-          ),
-        ],
-      ),
+      child: viewModel.isMatchReadyToFinish
+          ? Center(
+              child: _ControlActionButton(
+                icon: Icons.flag_rounded,
+                label: 'Fim',
+                color: AppColors.danger,
+                onTap: viewModel.canFinishMatch ? viewModel.finishMatch : null,
+              ),
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                _ControlActionButton(
+                  icon: Icons.flag_rounded,
+                  label: 'Fim',
+                  color: AppColors.danger,
+                  onTap: viewModel.canFinishMatch
+                      ? viewModel.finishMatch
+                      : null,
+                ),
+                _MainControlButton(
+                  isPaused: viewModel.isPaused,
+                  onTap: viewModel.canTogglePause
+                      ? viewModel.togglePause
+                      : null,
+                ),
+                _ControlActionButton(
+                  icon: Icons.skip_next_rounded,
+                  label: 'Set',
+                  color: AppColors.primary,
+                  onTap: viewModel.canCloseSet
+                      ? viewModel.closeCurrentSet
+                      : null,
+                ),
+              ],
+            ),
     );
   }
 }
@@ -926,15 +944,16 @@ class LandscapeScoreboard extends StatelessWidget {
             ),
           ),
         ),
-        SafeArea(
-          child: Align(
-            alignment: Alignment.topRight,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 14, top: 12),
-              child: _LandscapePauseButton(viewModel: viewModel),
+        if (!viewModel.isMatchReadyToFinish)
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 14, top: 12),
+                child: _LandscapePauseButton(viewModel: viewModel),
+              ),
             ),
           ),
-        ),
         SafeArea(
           child: Align(
             alignment: Alignment.bottomCenter,
@@ -1048,7 +1067,7 @@ class _LandscapePrimaryAction extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final label = viewModel.canFinishMatch ? 'Encerrar partida' : 'Proximo set';
+    final label = viewModel.canFinishMatch ? 'Fim' : 'Proximo set';
 
     final onPressed = viewModel.canFinishMatch
         ? viewModel.finishMatch

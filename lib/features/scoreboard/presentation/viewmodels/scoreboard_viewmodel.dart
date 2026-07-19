@@ -109,6 +109,13 @@ class ScoreboardViewModel extends ChangeNotifier {
         : activeMatch.awayTeam.name;
   }
 
+  bool get isMatchReadyToFinish {
+    final activeMatch = _match;
+    return activeMatch != null &&
+        activeMatch.status != 'finished' &&
+        (matchWinnerTeamId != null || _currentSetWouldFinishMatch(activeMatch));
+  }
+
   bool get canCloseSet {
     final activeMatch = _match;
     if (activeMatch == null ||
@@ -119,19 +126,16 @@ class ScoreboardViewModel extends ChangeNotifier {
       return false;
     }
 
-    final highestScore = _homeScore > _awayScore ? _homeScore : _awayScore;
-    final scoreDifference = (_homeScore - _awayScore).abs();
-
-    return highestScore >= activeMatch.pointsPerSet && scoreDifference >= 2;
+    return _hasValidCurrentSetScore(activeMatch) &&
+        !_currentSetWouldFinishMatch(activeMatch);
   }
 
   bool get canFinishMatch {
     final activeMatch = _match;
     return activeMatch != null &&
         activeMatch.status != 'finished' &&
-        matchWinnerTeamId != null &&
-        !_isSaving &&
-        !_isPaused;
+        isMatchReadyToFinish &&
+        !_isSaving;
   }
 
   bool get canTogglePause {
@@ -139,6 +143,7 @@ class ScoreboardViewModel extends ChangeNotifier {
     return activeMatch != null &&
         activeMatch.status != 'finished' &&
         !_isSaving &&
+        !isMatchReadyToFinish &&
         matchWinnerTeamId == null;
   }
 
@@ -254,7 +259,7 @@ class ScoreboardViewModel extends ChangeNotifier {
       _homeScore = 0;
       _awayScore = 0;
       _match = await _repository.getMatchScoreboard(activeMatch.matchId);
-      _resetPauseState();
+      _pauseCurrentSetAtStart();
     } catch (_) {
       _errorMessage = 'Nao foi possivel salvar o set.';
     } finally {
@@ -265,7 +270,15 @@ class ScoreboardViewModel extends ChangeNotifier {
 
   Future<void> finishMatch() async {
     final activeMatch = _match;
-    final winnerTeamId = matchWinnerTeamId;
+    final completedMatchWinnerTeamId = matchWinnerTeamId;
+    final shouldSaveCurrentSet =
+        completedMatchWinnerTeamId == null &&
+        activeMatch != null &&
+        _currentSetWouldFinishMatch(activeMatch);
+    final currentSetWinnerTeamId = activeMatch == null
+        ? null
+        : _currentSetWinnerTeamId(activeMatch);
+    final winnerTeamId = completedMatchWinnerTeamId ?? currentSetWinnerTeamId;
 
     if (activeMatch == null || winnerTeamId == null || !canFinishMatch) {
       return;
@@ -275,6 +288,19 @@ class ScoreboardViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
+      if (shouldSaveCurrentSet) {
+        await _repository.saveCompletedSet(
+          matchId: activeMatch.matchId,
+          setNumber: currentSetNumber,
+          homeTeamId: activeMatch.homeTeam.id,
+          awayTeamId: activeMatch.awayTeam.id,
+          homeScore: _homeScore,
+          awayScore: _awayScore,
+          winnerTeamId: winnerTeamId,
+          isTiebreak: currentSetNumber == activeMatch.bestOfSets,
+        );
+      }
+
       final nextMatch = await _repository.finishMatch(
         matchId: activeMatch.matchId,
         winnerTeamId: winnerTeamId,
@@ -283,14 +309,17 @@ class ScoreboardViewModel extends ChangeNotifier {
       await _repository.clearLiveScore(activeMatch.matchId);
       _homeScore = 0;
       _awayScore = 0;
-      _resetPauseState();
       _match =
           nextMatch ??
           await _repository.getMatchScoreboard(activeMatch.matchId);
 
-      if (_match?.status == 'in_progress') {
+      if (nextMatch != null && nextMatch.status == 'in_progress') {
+        _pauseMatchAtStart();
+      } else if (_match?.status == 'in_progress') {
+        _resetPauseState();
         _startElapsedTimer();
       } else {
+        _resetPauseState();
         _elapsedTimer?.cancel();
       }
     } catch (_) {
@@ -378,6 +407,37 @@ class ScoreboardViewModel extends ChangeNotifier {
     unawaited(_liveScoreSaveQueue);
   }
 
+  bool _hasValidCurrentSetScore(ScoreboardMatchEntity activeMatch) {
+    final highestScore = _homeScore > _awayScore ? _homeScore : _awayScore;
+    final scoreDifference = (_homeScore - _awayScore).abs();
+
+    return highestScore >= activeMatch.pointsPerSet && scoreDifference >= 2;
+  }
+
+  int? _currentSetWinnerTeamId(ScoreboardMatchEntity activeMatch) {
+    if (!_hasValidCurrentSetScore(activeMatch)) {
+      return null;
+    }
+
+    return _homeScore > _awayScore
+        ? activeMatch.homeTeam.id
+        : activeMatch.awayTeam.id;
+  }
+
+  bool _currentSetWouldFinishMatch(ScoreboardMatchEntity activeMatch) {
+    final currentSetWinnerTeamId = _currentSetWinnerTeamId(activeMatch);
+
+    if (currentSetWinnerTeamId == null) {
+      return false;
+    }
+
+    final currentWinnerCompletedSets = activeMatch.completedSets
+        .where((set) => set.winnerTeamId == currentSetWinnerTeamId)
+        .length;
+
+    return currentWinnerCompletedSets + 1 >= activeMatch.setsToWin;
+  }
+
   Duration _currentElapsedDuration(ScoreboardMatchEntity activeMatch) {
     final now = activeMatch.status == 'finished'
         ? activeMatch.finishedAt ?? activeMatch.startedAt
@@ -398,6 +458,19 @@ class ScoreboardViewModel extends ChangeNotifier {
     _isPaused = false;
     _pausedAt = null;
     _totalPausedDuration = Duration.zero;
+  }
+
+  void _pauseMatchAtStart() {
+    _elapsedTimer?.cancel();
+    _isPaused = true;
+    _pausedAt = DateTime.now();
+    _totalPausedDuration = Duration.zero;
+  }
+
+  void _pauseCurrentSetAtStart() {
+    _elapsedTimer?.cancel();
+    _isPaused = true;
+    _pausedAt = DateTime.now();
   }
 
   @override
