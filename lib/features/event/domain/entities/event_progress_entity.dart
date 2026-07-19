@@ -51,6 +51,7 @@ class EventTeamProgressEntity {
     required this.wins,
     required this.isPlaying,
     required this.waitingOrder,
+    this.players = const [],
   });
 
   final int id;
@@ -60,6 +61,21 @@ class EventTeamProgressEntity {
   final int wins;
   final bool isPlaying;
   final int? waitingOrder;
+  final List<EventTeamPlayerEntity> players;
+}
+
+class EventTeamPlayerEntity {
+  const EventTeamPlayerEntity({
+    required this.id,
+    required this.name,
+    required this.position,
+    required this.rotationOrder,
+  });
+
+  final int id;
+  final String name;
+  final String position;
+  final int? rotationOrder;
 }
 
 class EventMatchProgressEntity {

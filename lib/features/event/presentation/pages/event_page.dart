@@ -3,6 +3,7 @@ import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/feature_nav_bar.dart';
+import '../../../../shared/widgets/team_players_sheet.dart';
 import '../../../scoreboard/presentation/pages/scoreboard_page.dart';
 import '../../domain/entities/event_progress_entity.dart';
 import '../viewmodels/event_viewmodel.dart';
@@ -41,6 +42,23 @@ class _EventPageState extends State<EventPage> {
       MaterialPageRoute(builder: (_) => ScoreboardPage(matchId: match.id)),
     );
     await viewModel.loadEvent(eventId: widget.eventId);
+  }
+
+  void _showTeamPlayers(EventTeamProgressEntity team) {
+    showTeamPlayersSheet(
+      context: context,
+      teamName: team.name,
+      players: team.players.map(_playerViewDataFromEvent).toList(),
+      accentColor: team.isPlaying ? AppColors.success : AppColors.primary,
+    );
+  }
+
+  TeamPlayerViewData _playerViewDataFromEvent(EventTeamPlayerEntity player) {
+    return TeamPlayerViewData(
+      name: player.name,
+      position: player.position,
+      rotationOrder: player.rotationOrder,
+    );
   }
 
   Future<void> _editEventName(EventProgressEntity progress) async {
@@ -221,7 +239,18 @@ class _EventPageState extends State<EventPage> {
                   onDelete: () => _confirmDeleteEvent(progress),
                 ),
                 const SizedBox(height: 16),
-                _CurrentMatchCard(match: progress.currentMatch),
+                _CurrentMatchCard(
+                  match: progress.currentMatch,
+                  homeTeam: _teamById(
+                    progress.teams,
+                    progress.currentMatch?.homeTeamId,
+                  ),
+                  awayTeam: _teamById(
+                    progress.teams,
+                    progress.currentMatch?.awayTeamId,
+                  ),
+                  onTeamTap: _showTeamPlayers,
+                ),
                 const SizedBox(height: 18),
                 _SectionTitle(
                   title: 'Ranking dos times',
@@ -234,7 +263,11 @@ class _EventPageState extends State<EventPage> {
 
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: _TeamRankingCard(team: team, position: position),
+                    child: _TeamRankingCard(
+                      team: team,
+                      position: position,
+                      onTap: () => _showTeamPlayers(team),
+                    ),
                   );
                 }),
                 const SizedBox(height: 6),
@@ -296,6 +329,23 @@ class _EventPageState extends State<EventPage> {
     });
 
     return orderedTeams;
+  }
+
+  EventTeamProgressEntity? _teamById(
+    List<EventTeamProgressEntity> teams,
+    int? teamId,
+  ) {
+    if (teamId == null) {
+      return null;
+    }
+
+    for (final team in teams) {
+      if (team.id == teamId) {
+        return team;
+      }
+    }
+
+    return null;
   }
 }
 
@@ -549,9 +599,17 @@ class _SummaryMetric extends StatelessWidget {
 }
 
 class _CurrentMatchCard extends StatelessWidget {
-  const _CurrentMatchCard({required this.match});
+  const _CurrentMatchCard({
+    required this.match,
+    required this.homeTeam,
+    required this.awayTeam,
+    required this.onTeamTap,
+  });
 
   final EventMatchProgressEntity? match;
+  final EventTeamProgressEntity? homeTeam;
+  final EventTeamProgressEntity? awayTeam;
+  final ValueChanged<EventTeamProgressEntity> onTeamTap;
 
   @override
   Widget build(BuildContext context) {
@@ -631,6 +689,7 @@ class _CurrentMatchCard extends StatelessWidget {
                   name: currentMatch.homeTeamName,
                   color: AppColors.primary,
                   alignment: TextAlign.left,
+                  onTap: homeTeam == null ? null : () => onTeamTap(homeTeam!),
                 ),
               ),
               Container(
@@ -655,6 +714,7 @@ class _CurrentMatchCard extends StatelessWidget {
                   name: currentMatch.awayTeamName,
                   color: AppColors.danger,
                   alignment: TextAlign.right,
+                  onTap: awayTeam == null ? null : () => onTeamTap(awayTeam!),
                 ),
               ),
             ],
@@ -678,22 +738,47 @@ class _CurrentTeamName extends StatelessWidget {
     required this.name,
     required this.color,
     required this.alignment,
+    required this.onTap,
   });
 
   final String name;
   final Color color;
   final TextAlign alignment;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      name,
-      textAlign: alignment,
-      maxLines: 2,
-      overflow: TextOverflow.ellipsis,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-        color: color,
-        fontWeight: FontWeight.w900,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          child: Row(
+            mainAxisAlignment: alignment == TextAlign.right
+                ? MainAxisAlignment.end
+                : MainAxisAlignment.start,
+            children: [
+              Flexible(
+                child: Text(
+                  name,
+                  textAlign: alignment,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              if (onTap != null) ...[
+                const SizedBox(width: 5),
+                Icon(Icons.groups_2_outlined, color: color, size: 16),
+              ],
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -730,10 +815,15 @@ class _SectionTitle extends StatelessWidget {
 }
 
 class _TeamRankingCard extends StatelessWidget {
-  const _TeamRankingCard({required this.team, required this.position});
+  const _TeamRankingCard({
+    required this.team,
+    required this.position,
+    required this.onTap,
+  });
 
   final EventTeamProgressEntity team;
   final int position;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -743,85 +833,95 @@ class _TeamRankingCard extends StatelessWidget {
         ? AppColors.successBackground
         : AppColors.primary.withValues(alpha: 0.10);
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: rankBackground,
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '$position',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: rankColor,
-                  fontWeight: FontWeight.w900,
+        child: Ink(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.borderLight),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: rankBackground,
+                  shape: BoxShape.circle,
+                ),
+                child: Center(
+                  child: Text(
+                    '$position',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: rankColor,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      team.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${team.playersCount} jogadores | ${team.matchesPlayed} jogos | ${team.wins} vitorias',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 7,
+                ),
+                decoration: BoxDecoration(
+                  color: rankBackground,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isLeader
+                          ? Icons.emoji_events_outlined
+                          : Icons.groups_2_outlined,
+                      color: rankColor,
+                      size: 16,
+                    ),
+                    const SizedBox(width: 5),
+                    Text(
+                      '${team.wins}V',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: rankColor,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  team.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${team.playersCount} jogadores | ${team.matchesPlayed} jogos | ${team.wins} vitorias',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textMuted,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 10),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-            decoration: BoxDecoration(
-              color: rankBackground,
-              borderRadius: BorderRadius.circular(999),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  isLeader
-                      ? Icons.emoji_events_outlined
-                      : Icons.leaderboard_outlined,
-                  color: rankColor,
-                  size: 16,
-                ),
-                const SizedBox(width: 5),
-                Text(
-                  '${team.wins}V',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: rankColor,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

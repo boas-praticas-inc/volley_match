@@ -417,17 +417,58 @@ class EventLocalDataSource {
       waitingOrderByTeam[waitingTeamIds[index]] = index + 1;
     }
 
-    return teamRows.map((team) {
+    final eventTeams = <EventTeamProgressEntity>[];
+
+    for (final team in teamRows) {
       final teamId = team['id'] as int;
 
-      return EventTeamProgressEntity(
-        id: teamId,
-        name: team['name'] as String,
-        playersCount: team['players_count'] as int,
-        matchesPlayed: matchesPlayedByTeam[teamId] ?? 0,
-        wins: winsByTeam[teamId] ?? 0,
-        isPlaying: playingTeamIds.contains(teamId),
-        waitingOrder: waitingOrderByTeam[teamId],
+      eventTeams.add(
+        EventTeamProgressEntity(
+          id: teamId,
+          name: team['name'] as String,
+          playersCount: team['players_count'] as int,
+          matchesPlayed: matchesPlayedByTeam[teamId] ?? 0,
+          wins: winsByTeam[teamId] ?? 0,
+          isPlaying: playingTeamIds.contains(teamId),
+          waitingOrder: waitingOrderByTeam[teamId],
+          players: await _getTeamPlayers(db, teamId),
+        ),
+      );
+    }
+
+    return eventTeams;
+  }
+
+  Future<List<EventTeamPlayerEntity>> _getTeamPlayers(
+    DatabaseExecutor db,
+    int teamId,
+  ) async {
+    final result = await db.rawQuery(
+      '''
+      SELECT
+        players.id,
+        players.name,
+        players.position,
+        player_teams.rotation_order
+      FROM ${DatabaseTables.playerTeams} player_teams
+      INNER JOIN ${DatabaseTables.players} players
+        ON players.id = player_teams.player_id
+      WHERE player_teams.team_id = ?
+        AND player_teams.is_present = 1
+      ORDER BY
+        CASE WHEN player_teams.rotation_order IS NULL THEN 1 ELSE 0 END ASC,
+        player_teams.rotation_order ASC,
+        players.name COLLATE NOCASE ASC
+      ''',
+      [teamId],
+    );
+
+    return result.map((player) {
+      return EventTeamPlayerEntity(
+        id: player['id'] as int,
+        name: player['name'] as String,
+        position: player['position'] as String,
+        rotationOrder: player['rotation_order'] as int?,
       );
     }).toList();
   }

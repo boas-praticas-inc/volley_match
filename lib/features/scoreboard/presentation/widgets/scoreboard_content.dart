@@ -11,6 +11,8 @@ class PortraitScoreboard extends StatelessWidget {
     required this.onNewDraw,
     required this.onEventTap,
     required this.onRotationTap,
+    required this.onHomeTeamTap,
+    required this.onAwayTeamTap,
     required this.onExpandedTap,
   });
 
@@ -18,6 +20,8 @@ class PortraitScoreboard extends StatelessWidget {
   final VoidCallback onNewDraw;
   final VoidCallback onEventTap;
   final VoidCallback onRotationTap;
+  final VoidCallback onHomeTeamTap;
+  final VoidCallback onAwayTeamTap;
   final VoidCallback onExpandedTap;
 
   @override
@@ -42,7 +46,11 @@ class PortraitScoreboard extends StatelessWidget {
         children: [
           _MatchHeader(viewModel: viewModel),
           const SizedBox(height: 12),
-          _ScoreCard(viewModel: viewModel),
+          _ScoreCard(
+            viewModel: viewModel,
+            onHomeTeamTap: onHomeTeamTap,
+            onAwayTeamTap: onAwayTeamTap,
+          ),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -87,9 +95,15 @@ class PortraitScoreboard extends StatelessWidget {
 }
 
 class _ScoreCard extends StatelessWidget {
-  const _ScoreCard({required this.viewModel});
+  const _ScoreCard({
+    required this.viewModel,
+    required this.onHomeTeamTap,
+    required this.onAwayTeamTap,
+  });
 
   final ScoreboardViewModel viewModel;
+  final VoidCallback onHomeTeamTap;
+  final VoidCallback onAwayTeamTap;
 
   @override
   Widget build(BuildContext context) {
@@ -123,6 +137,7 @@ class _ScoreCard extends StatelessWidget {
                       score: viewModel.homeScore,
                       setsWon: viewModel.homeSetsWon,
                       accentColor: AppColors.primary,
+                      onTeamTap: onHomeTeamTap,
                       onIncrement: viewModel.canEditScore
                           ? viewModel.incrementHomeScore
                           : null,
@@ -138,6 +153,7 @@ class _ScoreCard extends StatelessWidget {
                       score: viewModel.awayScore,
                       setsWon: viewModel.awaySetsWon,
                       accentColor: AppColors.danger,
+                      onTeamTap: onAwayTeamTap,
                       onIncrement: viewModel.canEditScore
                           ? viewModel.incrementAwayScore
                           : null,
@@ -285,6 +301,7 @@ class _TeamScoreColumn extends StatelessWidget {
     required this.score,
     required this.setsWon,
     required this.accentColor,
+    required this.onTeamTap,
     required this.onIncrement,
     required this.onDecrement,
   });
@@ -293,6 +310,7 @@ class _TeamScoreColumn extends StatelessWidget {
   final int score;
   final int setsWon;
   final Color accentColor;
+  final VoidCallback onTeamTap;
   final VoidCallback? onIncrement;
   final VoidCallback? onDecrement;
 
@@ -300,28 +318,57 @@ class _TeamScoreColumn extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: accentColor.withValues(alpha: 0.12),
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: Text(
-            '$setsWon sets',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: accentColor,
-              fontWeight: FontWeight.w800,
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTeamTap,
+            borderRadius: BorderRadius.circular(18),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      '$setsWon sets',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: accentColor,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          team.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w800),
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Icon(
+                        Icons.groups_2_outlined,
+                        color: accentColor,
+                        size: 17,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 10),
-        Text(
-          team.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
         Text(

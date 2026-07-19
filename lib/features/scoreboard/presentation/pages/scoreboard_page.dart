@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:volley_match/core/router/app_routes.dart';
+import 'package:volley_match/core/theme/app_colors.dart';
 import 'package:volley_match/features/rotation_guide/presentation/pages/rotation_guide_page.dart';
 import 'package:volley_match/shared/widgets/feature_nav_bar.dart';
+import 'package:volley_match/shared/widgets/team_players_sheet.dart';
 
+import '../../domain/entities/scoreboard_match_entity.dart';
 import '../viewmodels/scoreboard_viewmodel.dart';
 import '../widgets/scoreboard_content.dart';
 
@@ -41,6 +44,25 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
     Navigator.of(
       context,
     ).pushNamed(AppRoutes.eventDetails, arguments: viewModel.match?.eventId);
+  }
+
+  void _showTeamPlayers(ScoreboardTeamEntity team, Color accentColor) {
+    showTeamPlayersSheet(
+      context: context,
+      teamName: team.name,
+      players: team.players.map(_playerViewDataFromScoreboard).toList(),
+      accentColor: accentColor,
+    );
+  }
+
+  TeamPlayerViewData _playerViewDataFromScoreboard(
+    ScoreboardPlayerEntity player,
+  ) {
+    return TeamPlayerViewData(
+      name: player.name,
+      position: player.position,
+      rotationOrder: player.rotationOrder,
+    );
   }
 
   Future<void> _openRotationGuide() async {
@@ -102,6 +124,20 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
                 onNewDraw: _openNewDraw,
                 onEventTap: _openEventProgress,
                 onRotationTap: _openRotationGuide,
+                onHomeTeamTap: () {
+                  final match = viewModel.match;
+
+                  if (match != null) {
+                    _showTeamPlayers(match.homeTeam, AppColors.primary);
+                  }
+                },
+                onAwayTeamTap: () {
+                  final match = viewModel.match;
+
+                  if (match != null) {
+                    _showTeamPlayers(match.awayTeam, AppColors.danger);
+                  }
+                },
                 onExpandedTap: () {
                   _openExpandedScoreboard();
                 },
