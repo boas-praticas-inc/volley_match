@@ -40,7 +40,7 @@ class HomeQuickActions extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Nova Partida',
+                      'Novo Evento',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
