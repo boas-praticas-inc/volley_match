@@ -14,12 +14,14 @@ class EventViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool _isFinishing = false;
   bool _isRenaming = false;
+  bool _isDeleting = false;
   String? _errorMessage;
 
   EventProgressEntity? get eventProgress => _eventProgress;
   bool get isLoading => _isLoading;
   bool get isFinishing => _isFinishing;
   bool get isRenaming => _isRenaming;
+  bool get isDeleting => _isDeleting;
   String? get errorMessage => _errorMessage;
   bool get hasEvent => _eventProgress != null;
 
@@ -96,6 +98,28 @@ class EventViewModel extends ChangeNotifier {
       return false;
     } finally {
       _isFinishing = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> deleteEvent(int eventId) async {
+    if (_isDeleting) {
+      return false;
+    }
+
+    _isDeleting = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await _repository.deleteEvent(eventId);
+      _eventProgress = null;
+      return true;
+    } catch (_) {
+      _errorMessage = 'Nao foi possivel excluir o evento.';
+      return false;
+    } finally {
+      _isDeleting = false;
       notifyListeners();
     }
   }

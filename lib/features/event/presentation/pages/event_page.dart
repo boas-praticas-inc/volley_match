@@ -123,6 +123,60 @@ class _EventPageState extends State<EventPage> {
     );
   }
 
+  Future<void> _confirmDeleteEvent(EventProgressEntity progress) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Excluir evento?'),
+          content: Text(
+            'O evento "${progress.name}" sera removido junto com seus times, partidas e sets.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('Cancelar'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.danger,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Excluir'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete != true) {
+      return;
+    }
+
+    final deleted = await viewModel.deleteEvent(progress.eventId);
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          deleted ? 'Evento excluido.' : 'Nao foi possivel excluir o evento.',
+        ),
+      ),
+    );
+
+    if (deleted) {
+      if (Navigator.of(context).canPop()) {
+        Navigator.of(context).pop(true);
+      } else {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.events);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return FeatureNavBar(
@@ -162,7 +216,9 @@ class _EventPageState extends State<EventPage> {
                 _EventSummary(
                   progress: progress,
                   isRenaming: viewModel.isRenaming,
+                  isDeleting: viewModel.isDeleting,
                   onEditName: () => _editEventName(progress),
+                  onDelete: () => _confirmDeleteEvent(progress),
                 ),
                 const SizedBox(height: 16),
                 _CurrentMatchCard(match: progress.currentMatch),
@@ -333,12 +389,16 @@ class _EventSummary extends StatelessWidget {
   const _EventSummary({
     required this.progress,
     required this.isRenaming,
+    required this.isDeleting,
     required this.onEditName,
+    required this.onDelete,
   });
 
   final EventProgressEntity progress;
   final bool isRenaming;
+  final bool isDeleting;
   final VoidCallback onEditName;
+  final VoidCallback onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -366,36 +426,16 @@ class _EventSummary extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 10),
-              Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: isRenaming ? null : onEditName,
-                  customBorder: const CircleBorder(),
-                  child: Ink(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.12),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.16),
-                      ),
-                    ),
-                    child: isRenaming
-                        ? const Padding(
-                            padding: EdgeInsets.all(11),
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Icon(
-                            Icons.edit_outlined,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                  ),
-                ),
+              _EventHeaderActionButton(
+                icon: Icons.edit_outlined,
+                isLoading: isRenaming,
+                onTap: isRenaming || isDeleting ? null : onEditName,
+              ),
+              const SizedBox(width: 8),
+              _EventHeaderActionButton(
+                icon: Icons.delete_outline_rounded,
+                isLoading: isDeleting,
+                onTap: isRenaming || isDeleting ? null : onDelete,
               ),
             ],
           ),
@@ -423,6 +463,47 @@ class _EventSummary extends StatelessWidget {
             ],
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _EventHeaderActionButton extends StatelessWidget {
+  const _EventHeaderActionButton({
+    required this.icon,
+    required this.isLoading,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final bool isLoading;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        child: Ink(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.12),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+          ),
+          child: isLoading
+              ? const Padding(
+                  padding: EdgeInsets.all(11),
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: Colors.white,
+                  ),
+                )
+              : Icon(icon, color: Colors.white, size: 20),
+        ),
       ),
     );
   }

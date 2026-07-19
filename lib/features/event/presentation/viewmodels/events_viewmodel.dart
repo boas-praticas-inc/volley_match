@@ -12,7 +12,6 @@ class EventsViewModel extends ChangeNotifier {
 
   final List<RecentEventEntity> _events = [];
   bool _isLoading = false;
-  int? _deletingEventId;
   String? _errorMessage;
   String _searchQuery = '';
   String _selectedStatus = allStatusFilter;
@@ -28,7 +27,6 @@ class EventsViewModel extends ChangeNotifier {
   ];
 
   bool get isLoading => _isLoading;
-  int? get deletingEventId => _deletingEventId;
   String? get errorMessage => _errorMessage;
   String get selectedStatus => _selectedStatus;
 
@@ -81,27 +79,5 @@ class EventsViewModel extends ChangeNotifier {
   void selectStatus(String status) {
     _selectedStatus = status;
     notifyListeners();
-  }
-
-  Future<bool> deleteEvent(int eventId) async {
-    if (_deletingEventId != null) {
-      return false;
-    }
-
-    _deletingEventId = eventId;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      await _repository.deleteEvent(eventId);
-      _events.removeWhere((event) => event.id == eventId);
-      return true;
-    } catch (_) {
-      _errorMessage = 'Nao foi possivel excluir o evento.';
-      return false;
-    } finally {
-      _deletingEventId = null;
-      notifyListeners();
-    }
   }
 }

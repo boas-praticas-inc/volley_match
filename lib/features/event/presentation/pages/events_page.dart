@@ -41,52 +41,6 @@ class _EventsPageState extends State<EventsPage> {
     await viewModel.loadEvents();
   }
 
-  Future<void> _confirmDeleteEvent(RecentEventEntity event) async {
-    final shouldDelete = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Excluir evento?'),
-          content: Text(
-            'O evento "${event.name}" sera removido junto com seus times, partidas e sets.',
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('Cancelar'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.danger,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Excluir'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (shouldDelete != true) {
-      return;
-    }
-
-    final deleted = await viewModel.deleteEvent(event.id);
-
-    if (!mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          deleted ? 'Evento excluido.' : 'Nao foi possivel excluir o evento.',
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return FeatureNavBar(
@@ -151,10 +105,7 @@ class _EventsPageState extends State<EventsPage> {
                                 padding: const EdgeInsets.only(bottom: 16),
                                 child: _EventListCard(
                                   event: event,
-                                  isDeleting:
-                                      viewModel.deletingEventId == event.id,
                                   onTap: () => _openEvent(event),
-                                  onDelete: () => _confirmDeleteEvent(event),
                                 ),
                               );
                             },
@@ -215,17 +166,10 @@ class _EventStatusFilters extends StatelessWidget {
 }
 
 class _EventListCard extends StatelessWidget {
-  const _EventListCard({
-    required this.event,
-    required this.isDeleting,
-    required this.onTap,
-    required this.onDelete,
-  });
+  const _EventListCard({required this.event, required this.onTap});
 
   final RecentEventEntity event;
-  final bool isDeleting;
   final VoidCallback onTap;
-  final VoidCallback onDelete;
 
   bool get isInProgress => event.status == 'in_progress';
 
@@ -239,123 +183,93 @@ class _EventListCard extends StatelessWidget {
     return Material(
       color: AppColors.surface,
       borderRadius: BorderRadius.circular(22),
-      child: Ink(
-        decoration: BoxDecoration(
-          color: AppColors.surface,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: AppColors.borderLight),
-        ),
-        child: Row(
-          children: [
-            Expanded(
-              child: InkWell(
-                onTap: onTap,
-                borderRadius: const BorderRadius.horizontal(
-                  left: Radius.circular(22),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(22),
+        child: Ink(
+          padding: const EdgeInsets.fromLTRB(16, 16, 12, 16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.borderLight),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.10),
+                  shape: BoxShape.circle,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
-                  child: Row(
+                child: const Icon(
+                  Icons.event_available_outlined,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      event.name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      _formatDate(event.date),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.textMuted,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        width: 50,
-                        height: 50,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.10),
-                          shape: BoxShape.circle,
+                          color: statusBackground,
+                          borderRadius: BorderRadius.circular(999),
                         ),
-                        child: const Icon(
-                          Icons.event_available_outlined,
-                          color: AppColors.primary,
-                        ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    event.name,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.copyWith(fontWeight: FontWeight.w900),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 9,
-                                    vertical: 5,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: statusBackground,
-                                    borderRadius: BorderRadius.circular(999),
-                                  ),
-                                  child: Text(
-                                    isInProgress ? 'Ativo' : 'Finalizado',
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .labelSmall
-                                        ?.copyWith(
-                                          color: statusColor,
-                                          fontWeight: FontWeight.w900,
-                                        ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 5),
-                            Text(
-                              _formatDate(event.date),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(
-                                    color: AppColors.textMuted,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                            ),
-                          ],
+                        child: Text(
+                          isInProgress ? 'Ativo' : 'Finalizado',
+                          style: Theme.of(context).textTheme.labelSmall
+                              ?.copyWith(
+                                color: statusColor,
+                                fontWeight: FontWeight.w900,
+                              ),
                         ),
                       ),
                     ],
                   ),
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 12, 12, 12),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  IconButton(
-                    onPressed: isDeleting ? null : onDelete,
-                    style: IconButton.styleFrom(
-                      backgroundColor: AppColors.danger.withValues(alpha: 0.08),
-                      foregroundColor: AppColors.danger,
-                      disabledBackgroundColor: AppColors.surfaceMuted,
-                      disabledForegroundColor: AppColors.textSubtle,
-                    ),
-                    icon: isDeleting
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Icon(Icons.delete_outline),
+                  const SizedBox(height: 8),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textSubtle,
+                    size: 22,
                   ),
-                  const SizedBox(height: 4),
-                  const Icon(Icons.chevron_right, color: AppColors.textSubtle),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
