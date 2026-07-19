@@ -29,7 +29,7 @@ class FeatureNavBar extends StatelessWidget {
       _ => AppRoutes.home,
     };
 
-    Navigator.of(context).pushReplacementNamed(rota);
+    Navigator.of(context).pushNamedAndRemoveUntil(rota, (route) => false);
   }
 
   @override
