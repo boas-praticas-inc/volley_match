@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:volley_match/core/router/app_routes.dart';
-import 'package:volley_match/shared/widgets/feature_navBar.dart';
+import 'package:volley_match/features/rotation_guide/presentation/pages/rotation_guide_page.dart';
+import 'package:volley_match/shared/widgets/feature_nav_bar.dart';
 
 import '../viewmodels/scoreboard_viewmodel.dart';
 import '../widgets/scoreboard_content.dart';
@@ -42,10 +43,28 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
     ).pushNamed(AppRoutes.eventDetails, arguments: viewModel.match?.eventId);
   }
 
-  void _showRotationMessage() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Guia de rotacao ainda nao integrado.')),
+  Future<void> _openRotationGuide() async {
+    if (!viewModel.hasMatch) {
+      return;
+    }
+
+    await viewModel.flushPendingSaves();
+
+    if (!mounted) {
+      return;
+    }
+
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => RotationGuidePage(matchId: viewModel.match!.matchId),
+      ),
     );
+
+    if (!mounted) {
+      return;
+    }
+
+    await viewModel.loadMatch();
   }
 
   Future<void> _openExpandedScoreboard() async {
@@ -82,7 +101,7 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
                 viewModel: viewModel,
                 onNewDraw: _openNewDraw,
                 onEventTap: _openEventProgress,
-                onRotationTap: _showRotationMessage,
+                onRotationTap: _openRotationGuide,
                 onExpandedTap: () {
                   _openExpandedScoreboard();
                 },

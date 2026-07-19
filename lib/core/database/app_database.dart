@@ -49,6 +49,10 @@ class AppDatabase {
         if (oldVersion < 5) {
           await _createLiveScoreSchema(db);
         }
+
+        if (oldVersion < 6) {
+          await _createRotationSchema(db);
+        }
       },
     );
   }
@@ -68,6 +72,7 @@ class AppDatabase {
     await _createMatchSchema(db);
     await _createScoreboardSchema(db);
     await _createLiveScoreSchema(db);
+    await _createRotationSchema(db);
   }
 
   Future<void> _createTeamDrawSchema(Database db) async {
@@ -206,5 +211,24 @@ class AppDatabase {
         FOREIGN KEY (match_id) REFERENCES ${DatabaseTables.matches}(id) ON DELETE CASCADE
       )
     ''');
+  }
+
+  Future<void> _createRotationSchema(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS ${DatabaseTables.pointEvents} (
+        match_id INTEGER NOT NULL,
+        set_number INTEGER NOT NULL,
+        sequence INTEGER NOT NULL,
+        scoring_team_id INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (match_id, set_number, sequence),
+        FOREIGN KEY (match_id) REFERENCES ${DatabaseTables.matches}(id) ON DELETE CASCADE,
+        FOREIGN KEY (scoring_team_id) REFERENCES ${DatabaseTables.teams}(id) ON DELETE RESTRICT
+      )
+    ''');
+
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_point_events_match_set ON ${DatabaseTables.pointEvents}(match_id, set_number)',
+    );
   }
 }

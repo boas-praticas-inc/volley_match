@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/widgets/feature_navBar.dart';
+import '../../../../shared/widgets/feature_nav_bar.dart';
 import '../../domain/entities/recent_event_entity.dart';
 import '../viewmodels/events_viewmodel.dart';
 

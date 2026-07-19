@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../../../core/router/app_routes.dart';
-import '../../../../shared/widgets/feature_navBar.dart';
+import '../../../../shared/widgets/feature_nav_bar.dart';
 import '../../../scoreboard/presentation/pages/scoreboard_page.dart';
 import '../../domain/entities/event_progress_entity.dart';
 import '../viewmodels/event_viewmodel.dart';

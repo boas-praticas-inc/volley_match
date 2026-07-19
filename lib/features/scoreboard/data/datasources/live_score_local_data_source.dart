@@ -33,6 +33,10 @@ class LiveScoreLocalDataSource {
       setNumber: result.first['set_number'] as int,
       homeScore: result.first['home_score'] as int,
       awayScore: result.first['away_score'] as int,
+      pointScoringTeamIds: await _getPointScoringTeamIds(
+        matchId: matchId,
+        setNumber: setNumber,
+      ),
     );
 
     if (liveScore.setNumber != setNumber) {
@@ -46,22 +50,70 @@ class LiveScoreLocalDataSource {
   Future<void> saveLiveScore(LiveScoreEntity liveScore) async {
     final db = await _database;
 
-    await db.insert(DatabaseTables.liveSets, {
-      'match_id': liveScore.matchId,
-      'set_number': liveScore.setNumber,
-      'home_score': liveScore.homeScore,
-      'away_score': liveScore.awayScore,
-      'updated_at': DateTime.now().toIso8601String(),
-    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.transaction((transaction) async {
+      final now = DateTime.now().toIso8601String();
+
+      await transaction.insert(DatabaseTables.liveSets, {
+        'match_id': liveScore.matchId,
+        'set_number': liveScore.setNumber,
+        'home_score': liveScore.homeScore,
+        'away_score': liveScore.awayScore,
+        'updated_at': now,
+      }, conflictAlgorithm: ConflictAlgorithm.replace);
+
+      await transaction.delete(
+        DatabaseTables.pointEvents,
+        where: 'match_id = ? AND set_number = ?',
+        whereArgs: [liveScore.matchId, liveScore.setNumber],
+      );
+
+      for (
+        var index = 0;
+        index < liveScore.pointScoringTeamIds.length;
+        index++
+      ) {
+        await transaction.insert(DatabaseTables.pointEvents, {
+          'match_id': liveScore.matchId,
+          'set_number': liveScore.setNumber,
+          'sequence': index + 1,
+          'scoring_team_id': liveScore.pointScoringTeamIds[index],
+          'created_at': now,
+        });
+      }
+    });
   }
 
   Future<void> clearLiveScore(int matchId) async {
     final db = await _database;
 
-    await db.delete(
-      DatabaseTables.liveSets,
-      where: 'match_id = ?',
-      whereArgs: [matchId],
+    await db.transaction((transaction) async {
+      await transaction.delete(
+        DatabaseTables.liveSets,
+        where: 'match_id = ?',
+        whereArgs: [matchId],
+      );
+
+      await transaction.delete(
+        DatabaseTables.pointEvents,
+        where: 'match_id = ?',
+        whereArgs: [matchId],
+      );
+    });
+  }
+
+  Future<List<int>> _getPointScoringTeamIds({
+    required int matchId,
+    required int setNumber,
+  }) async {
+    final db = await _database;
+    final events = await db.query(
+      DatabaseTables.pointEvents,
+      columns: ['scoring_team_id'],
+      where: 'match_id = ? AND set_number = ?',
+      whereArgs: [matchId, setNumber],
+      orderBy: 'sequence ASC',
     );
+
+    return events.map((event) => event['scoring_team_id'] as int).toList();
   }
 }

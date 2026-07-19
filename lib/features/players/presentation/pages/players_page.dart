@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../../../core/router/app_routes.dart';
-import '../../../../shared/widgets/feature_navBar.dart';
+import '../../../../shared/widgets/feature_nav_bar.dart';
 import '../../domain/entities/player_entity.dart';
 import 'edit_player_page.dart';
 import '../viewmodels/players_viewmodel.dart';

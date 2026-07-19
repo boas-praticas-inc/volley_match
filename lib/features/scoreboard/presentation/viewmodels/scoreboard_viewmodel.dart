@@ -17,6 +17,7 @@ class ScoreboardViewModel extends ChangeNotifier {
   ScoreboardMatchEntity? _match;
   int _homeScore = 0;
   int _awayScore = 0;
+  List<int> _pointScoringTeamIds = [];
   bool _isLoading = false;
   bool _isSaving = false;
   String? _errorMessage;
@@ -172,6 +173,7 @@ class ScoreboardViewModel extends ChangeNotifier {
         _resetPauseState();
         _homeScore = 0;
         _awayScore = 0;
+        _pointScoringTeamIds = [];
 
         if (_match?.status == 'in_progress') {
           await _restoreLiveScore();
@@ -193,6 +195,13 @@ class ScoreboardViewModel extends ChangeNotifier {
       return;
     }
 
+    final activeMatch = _match;
+
+    if (activeMatch == null) {
+      return;
+    }
+
+    _pointScoringTeamIds.add(activeMatch.homeTeam.id);
     _homeScore += 1;
     _enqueueLiveScoreSave();
     notifyListeners();
@@ -203,6 +212,7 @@ class ScoreboardViewModel extends ChangeNotifier {
       return;
     }
 
+    _removeLastPointForTeam(_match!.homeTeam.id);
     _homeScore -= 1;
     _enqueueLiveScoreSave();
     notifyListeners();
@@ -213,6 +223,13 @@ class ScoreboardViewModel extends ChangeNotifier {
       return;
     }
 
+    final activeMatch = _match;
+
+    if (activeMatch == null) {
+      return;
+    }
+
+    _pointScoringTeamIds.add(activeMatch.awayTeam.id);
     _awayScore += 1;
     _enqueueLiveScoreSave();
     notifyListeners();
@@ -223,9 +240,14 @@ class ScoreboardViewModel extends ChangeNotifier {
       return;
     }
 
+    _removeLastPointForTeam(_match!.awayTeam.id);
     _awayScore -= 1;
     _enqueueLiveScoreSave();
     notifyListeners();
+  }
+
+  Future<void> flushPendingSaves() {
+    return _liveScoreSaveQueue;
   }
 
   Future<void> closeCurrentSet() async {
@@ -258,6 +280,7 @@ class ScoreboardViewModel extends ChangeNotifier {
       await _repository.clearLiveScore(activeMatch.matchId);
       _homeScore = 0;
       _awayScore = 0;
+      _pointScoringTeamIds = [];
       _match = await _repository.getMatchScoreboard(activeMatch.matchId);
       _pauseCurrentSetAtStart();
     } catch (_) {
@@ -309,6 +332,7 @@ class ScoreboardViewModel extends ChangeNotifier {
       await _repository.clearLiveScore(activeMatch.matchId);
       _homeScore = 0;
       _awayScore = 0;
+      _pointScoringTeamIds = [];
       _match =
           nextMatch ??
           await _repository.getMatchScoreboard(activeMatch.matchId);
@@ -379,32 +403,106 @@ class ScoreboardViewModel extends ChangeNotifier {
 
     _homeScore = liveScore.homeScore;
     _awayScore = liveScore.awayScore;
+    _pointScoringTeamIds = _normalizedPointScoringTeamIds(
+      activeMatch: activeMatch,
+      liveScore: liveScore,
+    );
   }
 
-  Future<void> _saveLiveScore() async {
-    final activeMatch = _match;
-
-    if (activeMatch == null) {
-      return;
-    }
-
+  Future<void> _saveLiveScore(LiveScoreEntity liveScore) async {
     try {
-      await _repository.saveLiveScore(
-        LiveScoreEntity(
-          matchId: activeMatch.matchId,
-          setNumber: currentSetNumber,
-          homeScore: _homeScore,
-          awayScore: _awayScore,
-        ),
-      );
+      await _repository.saveLiveScore(liveScore);
     } catch (_) {
       _errorMessage = 'Nao foi possivel salvar o placar parcial.';
     }
   }
 
   void _enqueueLiveScoreSave() {
-    _liveScoreSaveQueue = _liveScoreSaveQueue.then((_) => _saveLiveScore());
+    final activeMatch = _match;
+
+    if (activeMatch == null) {
+      return;
+    }
+
+    final liveScore = LiveScoreEntity(
+      matchId: activeMatch.matchId,
+      setNumber: currentSetNumber,
+      homeScore: _homeScore,
+      awayScore: _awayScore,
+      pointScoringTeamIds: List<int>.unmodifiable(_pointScoringTeamIds),
+    );
+
+    _liveScoreSaveQueue = _liveScoreSaveQueue.then(
+      (_) => _saveLiveScore(liveScore),
+    );
     unawaited(_liveScoreSaveQueue);
+  }
+
+  void _removeLastPointForTeam(int teamId) {
+    for (var index = _pointScoringTeamIds.length - 1; index >= 0; index--) {
+      if (_pointScoringTeamIds[index] == teamId) {
+        _pointScoringTeamIds.removeAt(index);
+        return;
+      }
+    }
+  }
+
+  List<int> _normalizedPointScoringTeamIds({
+    required ScoreboardMatchEntity activeMatch,
+    required LiveScoreEntity liveScore,
+  }) {
+    final expectedEventsCount = liveScore.homeScore + liveScore.awayScore;
+
+    if (liveScore.pointScoringTeamIds.length == expectedEventsCount) {
+      return [...liveScore.pointScoringTeamIds];
+    }
+
+    return _syntheticPointScoringTeamIds(
+      activeMatch: activeMatch,
+      homeScore: liveScore.homeScore,
+      awayScore: liveScore.awayScore,
+    );
+  }
+
+  List<int> _syntheticPointScoringTeamIds({
+    required ScoreboardMatchEntity activeMatch,
+    required int homeScore,
+    required int awayScore,
+  }) {
+    final events = <int>[];
+    var remainingHomeScore = homeScore;
+    var remainingAwayScore = awayScore;
+    var nextTeamId = _initialServingTeamId(activeMatch);
+
+    while (remainingHomeScore > 0 || remainingAwayScore > 0) {
+      if (nextTeamId == activeMatch.homeTeam.id && remainingHomeScore > 0) {
+        events.add(activeMatch.homeTeam.id);
+        remainingHomeScore -= 1;
+      } else if (nextTeamId == activeMatch.awayTeam.id &&
+          remainingAwayScore > 0) {
+        events.add(activeMatch.awayTeam.id);
+        remainingAwayScore -= 1;
+      } else if (remainingHomeScore >= remainingAwayScore &&
+          remainingHomeScore > 0) {
+        events.add(activeMatch.homeTeam.id);
+        remainingHomeScore -= 1;
+      } else {
+        events.add(activeMatch.awayTeam.id);
+        remainingAwayScore -= 1;
+      }
+
+      nextTeamId = nextTeamId == activeMatch.homeTeam.id
+          ? activeMatch.awayTeam.id
+          : activeMatch.homeTeam.id;
+    }
+
+    return events;
+  }
+
+  int _initialServingTeamId(ScoreboardMatchEntity activeMatch) {
+    return currentSetNumber.isOdd
+        ? activeMatch.awayTeam.id
+        : activeMatch.homeTeam.id;
   }
 
   bool _hasValidCurrentSetScore(ScoreboardMatchEntity activeMatch) {

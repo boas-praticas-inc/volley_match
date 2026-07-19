@@ -27,10 +27,29 @@ class ScoreboardMatchEntity {
 }
 
 class ScoreboardTeamEntity {
-  const ScoreboardTeamEntity({required this.id, required this.name});
+  const ScoreboardTeamEntity({
+    required this.id,
+    required this.name,
+    this.players = const [],
+  });
 
   final int id;
   final String name;
+  final List<ScoreboardPlayerEntity> players;
+}
+
+class ScoreboardPlayerEntity {
+  const ScoreboardPlayerEntity({
+    required this.id,
+    required this.name,
+    required this.position,
+    required this.rotationOrder,
+  });
+
+  final int id;
+  final String name;
+  final String position;
+  final int? rotationOrder;
 }
 
 class ScoreboardSetEntity {

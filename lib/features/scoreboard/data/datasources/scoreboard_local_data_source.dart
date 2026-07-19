@@ -194,10 +194,51 @@ class ScoreboardLocalDataSource {
       [matchId],
     );
 
-    return result.map((team) {
-      return ScoreboardTeamEntity(
-        id: team['id'] as int,
-        name: team['name'] as String,
+    final teams = <ScoreboardTeamEntity>[];
+
+    for (final team in result) {
+      teams.add(
+        ScoreboardTeamEntity(
+          id: team['id'] as int,
+          name: team['name'] as String,
+          players: await _getTeamPlayers(db, team['id'] as int),
+        ),
+      );
+    }
+
+    return teams;
+  }
+
+  Future<List<ScoreboardPlayerEntity>> _getTeamPlayers(
+    DatabaseExecutor db,
+    int teamId,
+  ) async {
+    final result = await db.rawQuery(
+      '''
+      SELECT
+        players.id,
+        players.name,
+        players.position,
+        player_teams.rotation_order
+      FROM ${DatabaseTables.playerTeams} player_teams
+      INNER JOIN ${DatabaseTables.players} players
+        ON players.id = player_teams.player_id
+      WHERE player_teams.team_id = ?
+        AND player_teams.is_present = 1
+      ORDER BY
+        CASE WHEN player_teams.rotation_order IS NULL THEN 1 ELSE 0 END ASC,
+        player_teams.rotation_order ASC,
+        players.name COLLATE NOCASE ASC
+      ''',
+      [teamId],
+    );
+
+    return result.map((player) {
+      return ScoreboardPlayerEntity(
+        id: player['id'] as int,
+        name: player['name'] as String,
+        position: player['position'] as String,
+        rotationOrder: player['rotation_order'] as int?,
       );
     }).toList();
   }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_routes.dart';
-import '../../../../shared/widgets/feature_navBar.dart';
+import '../../../../shared/widgets/feature_nav_bar.dart';
 import '../viewmodels/home_viewmodel.dart';
 import '../widgets/home_quick_actions.dart';
 import '../widgets/home_recent_event_item.dart';

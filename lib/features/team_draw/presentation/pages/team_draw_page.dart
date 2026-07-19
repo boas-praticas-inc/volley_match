@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
-import '../../../../shared/widgets/feature_navBar.dart';
+import '../../../../shared/widgets/feature_nav_bar.dart';
 import '../../../players/presentation/widgets/players_position_filters.dart';
 import '../viewmodels/team_draw_viewmodel.dart';
 import '../widgets/selectable_player_card.dart';
