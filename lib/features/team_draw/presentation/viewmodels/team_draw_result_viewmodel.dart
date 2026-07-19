@@ -7,6 +7,7 @@ import '../../data/repositories/team_draw_repository_impl.dart';
 import '../../domain/entities/drawn_team_entity.dart';
 import '../../domain/repositories/team_draw_repository.dart';
 import '../../domain/services/balanced_team_generator.dart';
+import '../models/team_draw_result_item.dart';
 
 class TeamDrawResultViewModel extends ChangeNotifier {
   TeamDrawResultViewModel({
@@ -203,16 +204,4 @@ class TeamDrawResultViewModel extends ChangeNotifier {
       return DrawnTeamEntity(name: name, players: generatedTeams[index]);
     });
   }
-}
-
-class TeamDrawResultItem {
-  const TeamDrawResultItem({
-    required this.index,
-    required this.title,
-    required this.players,
-  });
-
-  final int index;
-  final String title;
-  final List<PlayerEntity> players;
 }

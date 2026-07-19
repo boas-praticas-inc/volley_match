@@ -4,6 +4,10 @@ import 'package:volley_match/core/theme/app_colors.dart';
 import '../../../scoreboard/presentation/pages/scoreboard_page.dart';
 import '../../../team_draw/domain/entities/drawn_team_entity.dart';
 import '../viewmodels/event_configuration_viewmodel.dart';
+import '../widgets/event_config_choice_chip.dart';
+import '../widgets/event_configuration_section.dart';
+import '../widgets/event_summary_card.dart';
+import '../widgets/starting_team_card.dart';
 
 class EventConfigurationPage extends StatefulWidget {
   const EventConfigurationPage({
@@ -105,7 +109,7 @@ class _EventConfigurationPageState extends State<EventConfigurationPage> {
                       ...viewModel.teams.map((team) {
                         return Padding(
                           padding: const EdgeInsets.only(bottom: 12),
-                          child: _StartingTeamCard(
+                          child: StartingTeamCard(
                             team: team,
                             isSelected: viewModel.isTeamSelected(team),
                             selectedOrder: viewModel.selectedOrderForTeam(team),
@@ -114,11 +118,11 @@ class _EventConfigurationPageState extends State<EventConfigurationPage> {
                         );
                       }),
                       const SizedBox(height: 8),
-                      _ConfigurationSection(
+                      EventConfigurationSection(
                         title: 'Sets por partida',
                         children: EventConfigurationViewModel.bestOfSetsOptions
                             .map((sets) {
-                              return _ConfigChoiceChip(
+                              return EventConfigChoiceChip(
                                 label: 'Melhor de $sets',
                                 isSelected:
                                     viewModel.selectedBestOfSets == sets,
@@ -130,12 +134,12 @@ class _EventConfigurationPageState extends State<EventConfigurationPage> {
                             .toList(),
                       ),
                       const SizedBox(height: 18),
-                      _ConfigurationSection(
+                      EventConfigurationSection(
                         title: 'Pontos por set',
                         children: EventConfigurationViewModel
                             .pointsPerSetOptions
                             .map((points) {
-                              return _ConfigChoiceChip(
+                              return EventConfigChoiceChip(
                                 label: '$points pontos',
                                 isSelected:
                                     viewModel.selectedPointsPerSet == points,
@@ -147,7 +151,7 @@ class _EventConfigurationPageState extends State<EventConfigurationPage> {
                             .toList(),
                       ),
                       const SizedBox(height: 18),
-                      _EventSummaryCard(
+                      EventSummaryCard(
                         selectedBestOfSets: viewModel.selectedBestOfSets,
                         setsToWin: viewModel.setsToWin,
                         pointsPerSet: viewModel.selectedPointsPerSet,
@@ -175,228 +179,6 @@ class _EventConfigurationPageState extends State<EventConfigurationPage> {
           ),
         );
       },
-    );
-  }
-}
-
-class _StartingTeamCard extends StatelessWidget {
-  const _StartingTeamCard({
-    required this.team,
-    required this.isSelected,
-    required this.selectedOrder,
-    required this.onTap,
-  });
-
-  final DrawnTeamEntity team;
-  final bool isSelected;
-  final int? selectedOrder;
-  final VoidCallback onTap;
-
-  double get averageSkillRating {
-    if (team.players.isEmpty) {
-      return 0;
-    }
-
-    final totalSkillRating = team.players.fold(
-      0,
-      (total, player) => total + player.skillRating,
-    );
-
-    return totalSkillRating / team.players.length;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(22),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.successBackground : AppColors.surface,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(
-            color: isSelected ? AppColors.success : AppColors.borderLight,
-            width: isSelected ? 1.6 : 1,
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x0F101828),
-              blurRadius: 18,
-              offset: Offset(0, 8),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: isSelected ? AppColors.success : AppColors.surfaceMuted,
-                shape: BoxShape.circle,
-              ),
-              child: Center(
-                child: isSelected
-                    ? Text(
-                        '$selectedOrder',
-                        style: Theme.of(context).textTheme.titleMedium
-                            ?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w800,
-                            ),
-                      )
-                    : const Icon(
-                        Icons.sports_volleyball_outlined,
-                        color: AppColors.textMuted,
-                      ),
-              ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    team.name,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w800,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    '${team.players.length} jogadores | média ${averageSkillRating.toStringAsFixed(1)}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.textMuted,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            Icon(
-              isSelected ? Icons.check_circle : Icons.radio_button_unchecked,
-              color: isSelected ? AppColors.success : AppColors.textSubtle,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ConfigurationSection extends StatelessWidget {
-  const _ConfigurationSection({required this.title, required this.children});
-
-  final String title;
-  final List<Widget> children;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: Theme.of(
-            context,
-          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 10),
-        SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Row(
-            children: children
-                .map(
-                  (child) => Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: child,
-                  ),
-                )
-                .toList(),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ConfigChoiceChip extends StatelessWidget {
-  const _ConfigChoiceChip({
-    required this.label,
-    required this.isSelected,
-    required this.onSelected,
-  });
-
-  final String label;
-  final bool isSelected;
-  final VoidCallback onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (_) => onSelected(),
-      showCheckmark: false,
-      labelStyle: TextStyle(
-        color: isSelected ? Colors.white : AppColors.textMuted,
-        fontWeight: FontWeight.w700,
-      ),
-      backgroundColor: AppColors.surfaceMuted,
-      selectedColor: AppColors.primary,
-      side: BorderSide.none,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(999)),
-    );
-  }
-}
-
-class _EventSummaryCard extends StatelessWidget {
-  const _EventSummaryCard({
-    required this.selectedBestOfSets,
-    required this.setsToWin,
-    required this.pointsPerSet,
-  });
-
-  final int selectedBestOfSets;
-  final int setsToWin;
-  final int pointsPerSet;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.borderLight),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: const BoxDecoration(
-              color: AppColors.surfaceMuted,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(Icons.rule_outlined, color: AppColors.primary),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Text(
-              'Partida em melhor de $selectedBestOfSets sets, vence quem fizer $setsToWin set(s). Cada set vai ate $pointsPerSet pontos.',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.textMuted,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

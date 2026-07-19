@@ -5,7 +5,7 @@ import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/feature_nav_bar.dart';
 import '../viewmodels/home_viewmodel.dart';
 import '../widgets/home_quick_actions.dart';
-import '../widgets/home_recent_event_item.dart';
+import '../models/home_recent_event_item.dart';
 import '../widgets/home_recent_events_section.dart';
 
 class HomePage extends StatefulWidget {

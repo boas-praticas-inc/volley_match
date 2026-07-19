@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../event/data/repositories/event_repository_impl.dart';
 import '../../../event/domain/repositories/event_repository.dart';
-import '../widgets/home_recent_event_item.dart';
+import '../models/home_recent_event_item.dart';
 
 class HomeViewModel extends ChangeNotifier {
   HomeViewModel({EventRepository? eventRepository})

@@ -4,6 +4,7 @@ import 'package:volley_match/core/theme/app_colors.dart';
 import '../../../event/presentation/pages/event_configuration_page.dart';
 import '../../../players/domain/entities/player_entity.dart';
 import '../viewmodels/team_draw_result_viewmodel.dart';
+import '../widgets/edit_team_name_dialog.dart';
 import '../widgets/generated_team_card.dart';
 import '../widgets/team_draw_states.dart';
 
@@ -57,7 +58,7 @@ class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
 
     final updatedName = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => _EditTeamNameDialog(initialName: team.name),
+      builder: (dialogContext) => EditTeamNameDialog(initialName: team.name),
     );
 
     if (updatedName == null || updatedName.trim().isEmpty) {
@@ -187,55 +188,6 @@ class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
           ),
         );
       },
-    );
-  }
-}
-
-class _EditTeamNameDialog extends StatefulWidget {
-  const _EditTeamNameDialog({required this.initialName});
-
-  final String initialName;
-
-  @override
-  State<_EditTeamNameDialog> createState() => _EditTeamNameDialogState();
-}
-
-class _EditTeamNameDialogState extends State<_EditTeamNameDialog> {
-  late final TextEditingController controller;
-
-  @override
-  void initState() {
-    super.initState();
-    controller = TextEditingController(text: widget.initialName);
-  }
-
-  @override
-  void dispose() {
-    controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text('Editar nome do time'),
-      content: TextField(
-        controller: controller,
-        autofocus: true,
-        decoration: const InputDecoration(hintText: 'Nome do time'),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancelar'),
-        ),
-        FilledButton(
-          onPressed: () {
-            Navigator.of(context).pop(controller.text.trim());
-          },
-          child: const Text('Salvar'),
-        ),
-      ],
     );
   }
 }

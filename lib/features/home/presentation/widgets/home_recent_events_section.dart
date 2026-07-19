@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
-import 'home_recent_event_item.dart';
+import '../models/home_recent_event_item.dart';
 
 class HomeRecentEventsSection extends StatelessWidget {
   const HomeRecentEventsSection({
