@@ -54,10 +54,7 @@ class _HomePageState extends State<HomePage> {
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              HomeQuickActions(
-                onNewDrawTap: _openTeamDraw,
-                onStartMatchTap: _openTeamDraw,
-              ),
+              HomeQuickActions(onStartMatchTap: _openTeamDraw),
               const SizedBox(height: 20),
               HomeRecentEventsSection(
                 events: viewModel.recentEvents,

@@ -236,6 +236,12 @@ class _EventListCard extends StatelessWidget {
         ? AppColors.successBackground
         : AppColors.surfaceMuted;
     final championName = event.championTeamName;
+    final championColor = championName == null
+        ? AppColors.textMuted
+        : AppColors.success;
+    final championBackground = championName == null
+        ? AppColors.surfaceMuted
+        : AppColors.successBackground;
 
     return Material(
       color: AppColors.surface,
@@ -329,17 +335,15 @@ class _EventListCard extends StatelessWidget {
                                 vertical: 7,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.secondary.withValues(
-                                  alpha: 0.10,
-                                ),
+                                color: championBackground,
                                 borderRadius: BorderRadius.circular(999),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(
+                                  Icon(
                                     Icons.emoji_events_outlined,
-                                    color: AppColors.secondary,
+                                    color: championColor,
                                     size: 17,
                                   ),
                                   const SizedBox(width: 6),
@@ -352,7 +356,7 @@ class _EventListCard extends StatelessWidget {
                                           .textTheme
                                           .labelMedium
                                           ?.copyWith(
-                                            color: AppColors.secondary,
+                                            color: championColor,
                                             fontWeight: FontWeight.w900,
                                           ),
                                     ),

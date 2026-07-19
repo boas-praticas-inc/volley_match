@@ -74,10 +74,10 @@ class _RecentEventCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final championColor = event.hasChampion
-        ? AppColors.secondary
+        ? AppColors.success
         : AppColors.textMuted;
     final championBackground = event.hasChampion
-        ? AppColors.secondary.withValues(alpha: 0.12)
+        ? AppColors.successBackground
         : AppColors.surfaceMuted;
 
     return Material(
