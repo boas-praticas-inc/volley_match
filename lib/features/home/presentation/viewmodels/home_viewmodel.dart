@@ -39,7 +39,7 @@ class HomeViewModel extends ChangeNotifier {
           }),
         );
     } catch (_) {
-      _recentEventsErrorMessage = 'Nao foi possivel carregar eventos recentes.';
+      _recentEventsErrorMessage = 'Não foi possível carregar eventos recentes.';
     } finally {
       _isLoadingRecentEvents = false;
       notifyListeners();

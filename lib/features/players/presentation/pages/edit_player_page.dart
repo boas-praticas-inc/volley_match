@@ -82,7 +82,7 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
         initialPosition: widget.player.position,
         initialSkillRating: widget.player.skillRating,
         initialPhotoPath: widget.player.photoPath,
-        submitLabel: 'Salvar Alteracoes',
+        submitLabel: 'Salvar Alterações',
         onSubmit: _saveChanges,
         secondaryAction: Align(
           alignment: Alignment.center,

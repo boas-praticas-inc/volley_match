@@ -15,7 +15,7 @@ class MatchPage extends StatelessWidget {
       body: FeaturePlaceholderSection(
         title: 'Feature: Partidas',
         description:
-            'Estrutura pronta para historico e detalhamento das partidas.',
+            'Estrutura pronta para histórico e detalhamento das partidas.',
         items: viewModel.responsibilities,
       ),
     );

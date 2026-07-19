@@ -38,7 +38,7 @@ class PlayerForm extends StatefulWidget {
     'Levantador',
     'Central',
     'Oposto',
-    'Libero',
+    'Líbero',
   ];
 
   final int playerId;
@@ -67,7 +67,7 @@ class _PlayerFormState extends State<PlayerForm> {
     _nameController = TextEditingController(text: widget.initialName);
     _nameController.addListener(_refreshAvatarFallback);
     _photoStorage = PlayerPhotoStorage();
-    _selectedPosition = widget.initialPosition;
+    _selectedPosition = _normalizePosition(widget.initialPosition);
     _skillRating = widget.initialSkillRating.toDouble();
     _photoPath = widget.initialPhotoPath;
   }
@@ -83,6 +83,19 @@ class _PlayerFormState extends State<PlayerForm> {
     if (_photoPath == null || _photoPath!.trim().isEmpty) {
       setState(() {});
     }
+  }
+
+  String _normalizePosition(String position) {
+    final normalized = position.trim().toLowerCase().replaceAll('í', 'i');
+
+    for (final option in PlayerForm._positions) {
+      final normalizedOption = option.trim().toLowerCase().replaceAll('í', 'i');
+      if (normalizedOption == normalized) {
+        return option;
+      }
+    }
+
+    return PlayerForm._defaultPosition;
   }
 
   Future<void> _showPhotoOptions() async {
@@ -159,7 +172,7 @@ class _PlayerFormState extends State<PlayerForm> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nao foi possivel carregar a foto.')),
+        const SnackBar(content: Text('Não foi possível carregar a foto.')),
       );
     }
   }
@@ -234,7 +247,7 @@ class _PlayerFormState extends State<PlayerForm> {
         ),
         const SizedBox(height: 20),
         Text(
-          'Posicao',
+          'Posição',
           style: Theme.of(
             context,
           ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),

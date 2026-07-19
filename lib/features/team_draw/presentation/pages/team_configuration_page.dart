@@ -45,7 +45,7 @@ class _TeamConfigurationPageState extends State<TeamConfigurationPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Configuracao dos times')),
+      appBar: AppBar(title: const Text('Configuração dos times')),
       body: Padding(
         padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
         child: Column(

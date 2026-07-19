@@ -17,7 +17,7 @@ class TeamDrawViewModel extends ChangeNotifier {
     'Levantador',
     'Central',
     'Oposto',
-    'Libero',
+    'Líbero',
   ];
 
   final PlayersRepository _repository;
@@ -38,7 +38,9 @@ class TeamDrawViewModel extends ChangeNotifier {
       );
 
       final matchesPosition =
-          _selectedPosition == 'Todos' || player.position == _selectedPosition;
+          _selectedPosition == 'Todos' ||
+          _normalizePosition(player.position) ==
+              _normalizePosition(_selectedPosition);
 
       return matchesSearch && matchesPosition;
     }).toList();
@@ -68,7 +70,7 @@ class TeamDrawViewModel extends ChangeNotifier {
     }
 
     if (!hasPlayersPerTeamOption) {
-      return 'Nao ha configuracao possivel entre 2 e 6 jogadores por time.';
+      return 'Não há configuração possível entre 2 e 6 jogadores por time.';
     }
 
     return null;
@@ -102,7 +104,7 @@ class TeamDrawViewModel extends ChangeNotifier {
         ..clear()
         ..addAll(_allPlayers.map((player) => player.id));
     } catch (_) {
-      _errorMessage = 'Nao foi possivel carregar os jogadores.';
+      _errorMessage = 'Não foi possível carregar os jogadores.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -131,5 +133,9 @@ class TeamDrawViewModel extends ChangeNotifier {
   void selectPosition(String position) {
     _selectedPosition = position;
     notifyListeners();
+  }
+
+  String _normalizePosition(String position) {
+    return position.trim().toLowerCase().replaceAll('í', 'i');
   }
 }

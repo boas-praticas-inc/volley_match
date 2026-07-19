@@ -38,10 +38,10 @@ class EventViewModel extends ChangeNotifier {
       if (_eventProgress == null) {
         _errorMessage = eventId == null
             ? 'Nenhum evento em andamento encontrado.'
-            : 'Evento nao encontrado.';
+            : 'Evento não encontrado.';
       }
     } catch (_) {
-      _errorMessage = 'Nao foi possivel carregar o evento.';
+      _errorMessage = 'Não foi possível carregar o evento.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -71,7 +71,7 @@ class EventViewModel extends ChangeNotifier {
       _eventProgress = _eventProgress?.copyWith(name: normalizedName);
       return true;
     } catch (_) {
-      _errorMessage = 'Nao foi possivel atualizar o nome do evento.';
+      _errorMessage = 'Não foi possível atualizar o nome do evento.';
       return false;
     } finally {
       _isRenaming = false;
@@ -94,7 +94,7 @@ class EventViewModel extends ChangeNotifier {
       _errorMessage = 'Nenhum evento em andamento encontrado.';
       return true;
     } catch (_) {
-      _errorMessage = 'Nao foi possivel finalizar o evento.';
+      _errorMessage = 'Não foi possível finalizar o evento.';
       return false;
     } finally {
       _isFinishing = false;
@@ -116,7 +116,7 @@ class EventViewModel extends ChangeNotifier {
       _eventProgress = null;
       return true;
     } catch (_) {
-      _errorMessage = 'Nao foi possivel excluir o evento.';
+      _errorMessage = 'Não foi possível excluir o evento.';
       return false;
     } finally {
       _isDeleting = false;

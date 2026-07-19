@@ -72,7 +72,7 @@ class RotationGuideViewModel extends ChangeNotifier {
         _liveScore = null;
         _courtState = null;
         _errorMessage =
-            'Modo rotacao disponivel somente para partidas com 6 jogadores em cada time.';
+            'Modo rotação disponível somente para partidas com 6 jogadores em cada time.';
         return;
       }
 
@@ -82,7 +82,7 @@ class RotationGuideViewModel extends ChangeNotifier {
       );
       _rebuildCourtState();
     } catch (_) {
-      _errorMessage = 'Nao foi possivel carregar as rotacoes.';
+      _errorMessage = 'Não foi possível carregar as rotações.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -171,7 +171,7 @@ class RotationGuideViewModel extends ChangeNotifier {
     try {
       await _scoreboardRepository.saveLiveScore(updatedLiveScore);
     } catch (_) {
-      _errorMessage = 'Nao foi possivel salvar o placar parcial.';
+      _errorMessage = 'Não foi possível salvar o placar parcial.';
       await refresh();
     } finally {
       _isSavingScore = false;

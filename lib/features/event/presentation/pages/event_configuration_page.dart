@@ -55,7 +55,7 @@ class _EventConfigurationPageState extends State<EventConfigurationPage> {
       return 'Com 2 times, eles permanecem jogando durante o evento.';
     }
 
-    return 'Vencedor permanece em quadra, perdedor sai e o proximo time entra.';
+    return 'Vencedor permanece em quadra, perdedor sai e o próximo time entra.';
   }
 
   void _toggleStartingTeam(DrawnTeamEntity team) {
@@ -121,7 +121,7 @@ class _EventConfigurationPageState extends State<EventConfigurationPage> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Nao foi possivel iniciar o evento.')),
+        const SnackBar(content: Text('Não foi possível iniciar o evento.')),
       );
     }
   }
@@ -326,7 +326,7 @@ class _StartingTeamCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${team.players.length} jogadores | media ${averageSkillRating.toStringAsFixed(1)}',
+                    '${team.players.length} jogadores | média ${averageSkillRating.toStringAsFixed(1)}',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColors.textMuted,
                       fontWeight: FontWeight.w600,

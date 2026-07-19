@@ -183,7 +183,7 @@ class ScoreboardViewModel extends ChangeNotifier {
         }
       }
     } catch (_) {
-      _errorMessage = 'Nao foi possivel carregar o placar.';
+      _errorMessage = 'Não foi possível carregar o placar.';
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -284,7 +284,7 @@ class ScoreboardViewModel extends ChangeNotifier {
       _match = await _repository.getMatchScoreboard(activeMatch.matchId);
       _pauseCurrentSetAtStart();
     } catch (_) {
-      _errorMessage = 'Nao foi possivel salvar o set.';
+      _errorMessage = 'Não foi possível salvar o set.';
     } finally {
       _isSaving = false;
       notifyListeners();
@@ -347,7 +347,7 @@ class ScoreboardViewModel extends ChangeNotifier {
         _elapsedTimer?.cancel();
       }
     } catch (_) {
-      _errorMessage = 'Nao foi possivel encerrar a partida.';
+      _errorMessage = 'Não foi possível encerrar a partida.';
     } finally {
       _isSaving = false;
       notifyListeners();
@@ -413,7 +413,7 @@ class ScoreboardViewModel extends ChangeNotifier {
     try {
       await _repository.saveLiveScore(liveScore);
     } catch (_) {
-      _errorMessage = 'Nao foi possivel salvar o placar parcial.';
+      _errorMessage = 'Não foi possível salvar o placar parcial.';
     }
   }
 

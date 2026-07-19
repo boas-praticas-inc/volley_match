@@ -15,7 +15,7 @@ class PlayersViewModel extends ChangeNotifier {
     'Levantador',
     'Central',
     'Oposto',
-    'Libero',
+    'Líbero',
   ];
 
   final PlayersRepository _repository;
@@ -40,7 +40,9 @@ class PlayersViewModel extends ChangeNotifier {
       );
 
       final matchesPosition =
-          _selectedPosition == 'Todos' || player.position == _selectedPosition;
+          _selectedPosition == 'Todos' ||
+          _normalizePosition(player.position) ==
+              _normalizePosition(_selectedPosition);
 
       return matchesSearch && matchesPosition;
     }).toList();
@@ -146,6 +148,10 @@ class PlayersViewModel extends ChangeNotifier {
   void selectPosition(String position) {
     _selectedPosition = position;
     notifyListeners();
+  }
+
+  String _normalizePosition(String position) {
+    return position.trim().toLowerCase().replaceAll('í', 'i');
   }
 
   Future<void> _deletePhotoSafely(String? photoPath) async {

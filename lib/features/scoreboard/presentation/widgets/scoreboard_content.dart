@@ -65,7 +65,7 @@ class PortraitScoreboard extends StatelessWidget {
               Expanded(
                 child: _SecondaryScoreboardButton(
                   icon: Icons.rotate_right_outlined,
-                  label: 'Rotacao',
+                  label: 'Rotação',
                   onTap: onRotationTap,
                 ),
               ),
@@ -865,7 +865,7 @@ class NoActiveMatchState extends StatelessWidget {
                 ),
                 const SizedBox(height: 14),
                 Text(
-                  'Para iniciar uma partida, faca um novo sorteio e configure o evento.',
+                  'Para iniciar uma partida, faça um novo sorteio e configure o evento.',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppColors.textMuted,
                     fontWeight: FontWeight.w700,
@@ -1114,7 +1114,7 @@ class _LandscapePrimaryAction extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
-    final label = viewModel.canFinishMatch ? 'Fim' : 'Proximo set';
+    final label = viewModel.canFinishMatch ? 'Fim' : 'Próximo set';
 
     final onPressed = viewModel.canFinishMatch
         ? viewModel.finishMatch

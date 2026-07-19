@@ -4,6 +4,6 @@ class MatchViewModel extends ChangeNotifier {
   final List<String> responsibilities = const [
     'Resultado final da partida.',
     'Quantidade de sets para vencer.',
-    'Vinculo com evento e time vencedor.',
+    'Vínculo com evento e time vencedor.',
   ];
 }

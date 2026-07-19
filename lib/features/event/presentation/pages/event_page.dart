@@ -88,7 +88,7 @@ class _EventPageState extends State<EventPage> {
         content: Text(
           saved
               ? 'Nome do evento atualizado.'
-              : 'Nao foi possivel atualizar o nome do evento.',
+              : 'Não foi possível atualizar o nome do evento.',
         ),
       ),
     );
@@ -136,7 +136,7 @@ class _EventPageState extends State<EventPage> {
         content: Text(
           finished
               ? 'Evento finalizado.'
-              : 'Nao foi possivel finalizar o evento.',
+              : 'Não foi possível finalizar o evento.',
         ),
       ),
     );
@@ -149,7 +149,7 @@ class _EventPageState extends State<EventPage> {
         return AlertDialog(
           title: const Text('Excluir evento?'),
           content: Text(
-            'O evento "${progress.name}" sera removido junto com seus times, partidas e sets.',
+            'O evento "${progress.name}" será removido junto com seus times, partidas e sets.',
           ),
           actions: [
             TextButton(
@@ -182,7 +182,7 @@ class _EventPageState extends State<EventPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          deleted ? 'Evento excluido.' : 'Nao foi possivel excluir o evento.',
+          deleted ? 'Evento excluído.' : 'Não foi possível excluir o evento.',
         ),
       ),
     );
@@ -273,7 +273,7 @@ class _EventPageState extends State<EventPage> {
                 }),
                 const SizedBox(height: 6),
                 _SectionTitle(
-                  title: 'Historico de partidas',
+                  title: 'Histórico de partidas',
                   subtitle: '${progress.finishedMatches} finalizadas',
                 ),
                 const SizedBox(height: 12),
@@ -880,7 +880,7 @@ class _TeamRankingCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${team.playersCount} jogadores | ${team.matchesPlayed} jogos | ${team.wins} vitorias',
+                      '${team.playersCount} jogadores | ${team.matchesPlayed} jogos | ${team.wins} vitórias',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.textMuted,
                         fontWeight: FontWeight.w700,
@@ -1070,7 +1070,7 @@ class _EmptyHistoryCard extends StatelessWidget {
         border: Border.all(color: AppColors.borderLight),
       ),
       child: Text(
-        'As partidas do evento vao aparecer aqui.',
+        'As partidas do evento vão aparecer aqui.',
         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
           color: AppColors.textMuted,
           fontWeight: FontWeight.w700,

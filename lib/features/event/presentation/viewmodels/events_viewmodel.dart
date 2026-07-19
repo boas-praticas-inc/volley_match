@@ -64,7 +64,7 @@ class EventsViewModel extends ChangeNotifier {
         ..clear()
         ..addAll(events);
     } catch (_) {
-      _errorMessage = 'Nao foi possivel carregar os eventos.';
+      _errorMessage = 'Não foi possível carregar os eventos.';
     } finally {
       _isLoading = false;
       notifyListeners();

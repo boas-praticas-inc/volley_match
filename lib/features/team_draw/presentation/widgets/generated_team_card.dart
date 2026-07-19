@@ -107,7 +107,7 @@ class GeneratedTeamCard extends StatelessWidget {
                     border: Border.all(color: Colors.white.withValues(alpha: 0.14)),
                   ),
                   child: Text(
-                    'Media ${averageSkillRating.toStringAsFixed(1)}',
+                    'Média ${averageSkillRating.toStringAsFixed(1)}',
                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,

@@ -47,7 +47,7 @@ class HomeRecentEventsSection extends StatelessWidget {
         else if (events.isEmpty)
           const _RecentEventsFeedbackCard(
             title: 'Nenhum evento recente',
-            message: 'Eventos finalizados vao aparecer aqui.',
+            message: 'Eventos finalizados vão aparecer aqui.',
             icon: Icons.timeline_outlined,
           )
         else

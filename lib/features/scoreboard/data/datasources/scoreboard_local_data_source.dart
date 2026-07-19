@@ -238,11 +238,25 @@ class ScoreboardLocalDataSource {
       return ScoreboardPlayerEntity(
         id: player['id'] as int,
         name: player['name'] as String,
-        position: player['position'] as String,
+        position: _canonicalPosition(player['position'] as String),
         rotationOrder: player['rotation_order'] as int?,
         photoPath: player['photo_path'] as String?,
       );
     }).toList();
+  }
+
+  String _canonicalPosition(String position) {
+    final trimmedPosition = position.trim();
+    final normalizedPosition = trimmedPosition.toLowerCase().replaceAll(
+      'í',
+      'i',
+    );
+
+    if (normalizedPosition == 'libero') {
+      return 'Líbero';
+    }
+
+    return trimmedPosition;
   }
 
   Future<List<ScoreboardSetEntity>> _getCompletedSets(

@@ -216,8 +216,8 @@ class RotationCalculator {
       2: _takeByPosition(available, const ['Central']),
       3: setter,
       4: _takeByPosition(available, const ['Oposto', 'Ponteiro']),
-      5: _takeByPosition(available, const ['Ponteiro', 'Libero']),
-      6: _takeByPosition(available, const ['Libero', 'Central']),
+      5: _takeByPosition(available, const ['Ponteiro', 'Líbero']),
+      6: _takeByPosition(available, const ['Líbero', 'Central']),
     };
 
     return _fillOpenZones(lineup, available);
@@ -307,7 +307,11 @@ class RotationCalculator {
   }
 
   bool _matchesPosition(String value, String expected) {
-    return value.trim().toLowerCase() == expected.trim().toLowerCase();
+    return _normalizePosition(value) == _normalizePosition(expected);
+  }
+
+  String _normalizePosition(String position) {
+    return position.trim().toLowerCase().replaceAll('í', 'i');
   }
 }
 

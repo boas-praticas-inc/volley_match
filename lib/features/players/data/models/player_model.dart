@@ -13,7 +13,7 @@ class PlayerModel extends PlayerEntity {
     return PlayerModel(
       id: map['id'] as int,
       name: map['name'] as String,
-      position: map['position'] as String,
+      position: _canonicalPosition(map['position'] as String),
       skillRating: map['skill_rating'] as int,
       photoPath: map['photo_path'] as String?,
     );
@@ -24,7 +24,7 @@ class PlayerModel extends PlayerEntity {
       id: entity.id,
       name: entity.name,
       skillRating: entity.skillRating,
-      position: entity.position,
+      position: _canonicalPosition(entity.position),
       photoPath: entity.photoPath,
     );
   }
@@ -37,5 +37,19 @@ class PlayerModel extends PlayerEntity {
       'skill_rating': skillRating,
       'photo_path': photoPath,
     };
+  }
+
+  static String _canonicalPosition(String position) {
+    final trimmedPosition = position.trim();
+    final normalizedPosition = trimmedPosition.toLowerCase().replaceAll(
+      'í',
+      'i',
+    );
+
+    if (normalizedPosition == 'libero') {
+      return 'Líbero';
+    }
+
+    return trimmedPosition;
   }
 }

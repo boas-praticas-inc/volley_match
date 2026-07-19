@@ -74,7 +74,7 @@ class _RotationGuidePageState extends State<RotationGuidePage> {
               return _RotationEmptyState(
                 message:
                     viewModel.errorMessage ??
-                    'Nao foi possivel montar a rotacao.',
+                    'Não foi possível montar a rotação.',
                 onClose: _close,
               );
             }
@@ -110,7 +110,7 @@ class _RotationModeContent extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _RotationHeader(
-            title: 'Modo Rotacao',
+            title: 'Modo Rotação',
             subtitle:
                 '${state.matchTitle} | Set ${state.currentSetNumber} | ${state.system.name}',
             trailing: Row(
@@ -149,8 +149,8 @@ class _RotationEmptyState extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _RotationHeader(
-            title: 'Modo Rotacao',
-            subtitle: 'Partida nao encontrada',
+            title: 'Modo Rotação',
+            subtitle: 'Partida não encontrada',
             trailing: _HeaderIconButton(icon: Icons.close, onTap: onClose),
           ),
           Expanded(

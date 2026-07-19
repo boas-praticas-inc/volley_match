@@ -92,7 +92,7 @@ class _EventsPageState extends State<EventsPage> {
                       ? const _EventsFeedbackState(
                           title: 'Nenhum evento encontrado',
                           message:
-                              'Eventos criados a partir de sorteios vao aparecer aqui.',
+                              'Eventos criados a partir de sorteios vão aparecer aqui.',
                         )
                       : RefreshIndicator(
                           onRefresh: viewModel.loadEvents,
