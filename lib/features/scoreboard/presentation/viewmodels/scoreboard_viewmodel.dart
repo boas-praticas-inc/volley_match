@@ -6,13 +6,20 @@ import '../../data/repositories/scoreboard_repository_impl.dart';
 import '../../domain/entities/live_score_entity.dart';
 import '../../domain/entities/scoreboard_match_entity.dart';
 import '../../domain/repositories/scoreboard_repository.dart';
+import '../../domain/services/point_event_normalizer.dart';
 
 class ScoreboardViewModel extends ChangeNotifier {
-  ScoreboardViewModel({required this.matchId, ScoreboardRepository? repository})
-    : _repository = repository ?? ScoreboardRepositoryImpl();
+  ScoreboardViewModel({
+    required this.matchId,
+    ScoreboardRepository? repository,
+    PointEventNormalizer? pointEventNormalizer,
+  }) : _repository = repository ?? ScoreboardRepositoryImpl(),
+       _pointEventNormalizer =
+           pointEventNormalizer ?? const PointEventNormalizer();
 
   final int? matchId;
   final ScoreboardRepository _repository;
+  final PointEventNormalizer _pointEventNormalizer;
 
   ScoreboardMatchEntity? _match;
   int _homeScore = 0;
@@ -403,8 +410,9 @@ class ScoreboardViewModel extends ChangeNotifier {
 
     _homeScore = liveScore.homeScore;
     _awayScore = liveScore.awayScore;
-    _pointScoringTeamIds = _normalizedPointScoringTeamIds(
-      activeMatch: activeMatch,
+    _pointScoringTeamIds = _pointEventNormalizer.normalizedPointScoringTeamIds(
+      match: activeMatch,
+      currentSetNumber: currentSetNumber,
       liveScore: liveScore,
     );
   }
@@ -445,64 +453,6 @@ class ScoreboardViewModel extends ChangeNotifier {
         return;
       }
     }
-  }
-
-  List<int> _normalizedPointScoringTeamIds({
-    required ScoreboardMatchEntity activeMatch,
-    required LiveScoreEntity liveScore,
-  }) {
-    final expectedEventsCount = liveScore.homeScore + liveScore.awayScore;
-
-    if (liveScore.pointScoringTeamIds.length == expectedEventsCount) {
-      return [...liveScore.pointScoringTeamIds];
-    }
-
-    return _syntheticPointScoringTeamIds(
-      activeMatch: activeMatch,
-      homeScore: liveScore.homeScore,
-      awayScore: liveScore.awayScore,
-    );
-  }
-
-  List<int> _syntheticPointScoringTeamIds({
-    required ScoreboardMatchEntity activeMatch,
-    required int homeScore,
-    required int awayScore,
-  }) {
-    final events = <int>[];
-    var remainingHomeScore = homeScore;
-    var remainingAwayScore = awayScore;
-    var nextTeamId = _initialServingTeamId(activeMatch);
-
-    while (remainingHomeScore > 0 || remainingAwayScore > 0) {
-      if (nextTeamId == activeMatch.homeTeam.id && remainingHomeScore > 0) {
-        events.add(activeMatch.homeTeam.id);
-        remainingHomeScore -= 1;
-      } else if (nextTeamId == activeMatch.awayTeam.id &&
-          remainingAwayScore > 0) {
-        events.add(activeMatch.awayTeam.id);
-        remainingAwayScore -= 1;
-      } else if (remainingHomeScore >= remainingAwayScore &&
-          remainingHomeScore > 0) {
-        events.add(activeMatch.homeTeam.id);
-        remainingHomeScore -= 1;
-      } else {
-        events.add(activeMatch.awayTeam.id);
-        remainingAwayScore -= 1;
-      }
-
-      nextTeamId = nextTeamId == activeMatch.homeTeam.id
-          ? activeMatch.awayTeam.id
-          : activeMatch.homeTeam.id;
-    }
-
-    return events;
-  }
-
-  int _initialServingTeamId(ScoreboardMatchEntity activeMatch) {
-    return currentSetNumber.isOdd
-        ? activeMatch.awayTeam.id
-        : activeMatch.homeTeam.id;
   }
 
   bool _hasValidCurrentSetScore(ScoreboardMatchEntity activeMatch) {

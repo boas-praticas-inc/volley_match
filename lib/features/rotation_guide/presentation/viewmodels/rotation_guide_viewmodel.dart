@@ -4,18 +4,23 @@ import '../../../scoreboard/data/repositories/scoreboard_repository_impl.dart';
 import '../../../scoreboard/domain/entities/live_score_entity.dart';
 import '../../../scoreboard/domain/entities/scoreboard_match_entity.dart';
 import '../../../scoreboard/domain/repositories/scoreboard_repository.dart';
+import '../../../scoreboard/domain/services/point_event_normalizer.dart';
 import '../../domain/entities/rotation_system_entity.dart';
 import '../../domain/services/rotation_calculator.dart';
 
 class RotationGuideViewModel extends ChangeNotifier {
   RotationGuideViewModel({
     ScoreboardRepository? scoreboardRepository,
+    PointEventNormalizer? pointEventNormalizer,
     RotationCalculator? rotationCalculator,
   }) : _scoreboardRepository =
            scoreboardRepository ?? ScoreboardRepositoryImpl(),
+       _pointEventNormalizer =
+           pointEventNormalizer ?? const PointEventNormalizer(),
        _rotationCalculator = rotationCalculator ?? RotationCalculator();
 
   final ScoreboardRepository _scoreboardRepository;
+  final PointEventNormalizer _pointEventNormalizer;
   final RotationCalculator _rotationCalculator;
 
   ScoreboardMatchEntity? _match;
@@ -180,33 +185,10 @@ class RotationGuideViewModel extends ChangeNotifier {
   }
 
   LiveScoreEntity _effectiveLiveScore(ScoreboardMatchEntity activeMatch) {
-    final liveScore = _liveScore;
-
-    if (liveScore == null) {
-      return LiveScoreEntity(
-        matchId: activeMatch.matchId,
-        setNumber: currentSetNumber,
-        homeScore: 0,
-        awayScore: 0,
-      );
-    }
-
-    final expectedEventsCount = liveScore.homeScore + liveScore.awayScore;
-
-    if (liveScore.pointScoringTeamIds.length == expectedEventsCount) {
-      return liveScore;
-    }
-
-    return LiveScoreEntity(
-      matchId: liveScore.matchId,
-      setNumber: liveScore.setNumber,
-      homeScore: liveScore.homeScore,
-      awayScore: liveScore.awayScore,
-      pointScoringTeamIds: _syntheticPointScoringTeamIds(
-        activeMatch: activeMatch,
-        homeScore: liveScore.homeScore,
-        awayScore: liveScore.awayScore,
-      ),
+    return _pointEventNormalizer.normalizedLiveScore(
+      match: activeMatch,
+      currentSetNumber: currentSetNumber,
+      liveScore: _liveScore,
     );
   }
 
@@ -217,43 +199,6 @@ class RotationGuideViewModel extends ChangeNotifier {
         return;
       }
     }
-  }
-
-  List<int> _syntheticPointScoringTeamIds({
-    required ScoreboardMatchEntity activeMatch,
-    required int homeScore,
-    required int awayScore,
-  }) {
-    final events = <int>[];
-    var remainingHomeScore = homeScore;
-    var remainingAwayScore = awayScore;
-    var nextTeamId = currentSetNumber.isOdd
-        ? activeMatch.awayTeam.id
-        : activeMatch.homeTeam.id;
-
-    while (remainingHomeScore > 0 || remainingAwayScore > 0) {
-      if (nextTeamId == activeMatch.homeTeam.id && remainingHomeScore > 0) {
-        events.add(activeMatch.homeTeam.id);
-        remainingHomeScore -= 1;
-      } else if (nextTeamId == activeMatch.awayTeam.id &&
-          remainingAwayScore > 0) {
-        events.add(activeMatch.awayTeam.id);
-        remainingAwayScore -= 1;
-      } else if (remainingHomeScore >= remainingAwayScore &&
-          remainingHomeScore > 0) {
-        events.add(activeMatch.homeTeam.id);
-        remainingHomeScore -= 1;
-      } else {
-        events.add(activeMatch.awayTeam.id);
-        remainingAwayScore -= 1;
-      }
-
-      nextTeamId = nextTeamId == activeMatch.homeTeam.id
-          ? activeMatch.awayTeam.id
-          : activeMatch.homeTeam.id;
-    }
-
-    return events;
   }
 
   void _rebuildCourtState() {

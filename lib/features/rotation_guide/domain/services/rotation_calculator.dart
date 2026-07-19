@@ -1,9 +1,16 @@
 import '../../../scoreboard/domain/entities/live_score_entity.dart';
 import '../../../scoreboard/domain/entities/scoreboard_match_entity.dart';
+import '../../../scoreboard/domain/services/point_event_normalizer.dart';
 import '../entities/rotation_system_entity.dart';
 
 class RotationCalculator {
+  RotationCalculator({PointEventNormalizer? pointEventNormalizer})
+    : _pointEventNormalizer =
+          pointEventNormalizer ?? const PointEventNormalizer();
+
   static const List<int> _sixZeroRotationPath = [2, 6, 5, 1, 4];
+
+  final PointEventNormalizer _pointEventNormalizer;
 
   RotationCourtStateEntity build({
     required ScoreboardMatchEntity match,
@@ -11,11 +18,12 @@ class RotationCalculator {
     required LiveScoreEntity? liveScore,
     required int currentSetNumber,
   }) {
-    final normalizedEvents = _normalizedPointEvents(
-      match: match,
-      liveScore: liveScore,
-      currentSetNumber: currentSetNumber,
-    );
+    final normalizedEvents = _pointEventNormalizer
+        .normalizedPointScoringTeamIds(
+          match: match,
+          currentSetNumber: currentSetNumber,
+          liveScore: liveScore,
+        );
     final rotationCount = _rotationCountFromEvents(
       match: match,
       currentSetNumber: currentSetNumber,
@@ -41,73 +49,12 @@ class RotationCalculator {
     );
   }
 
-  List<int> _normalizedPointEvents({
-    required ScoreboardMatchEntity match,
-    required LiveScoreEntity? liveScore,
-    required int currentSetNumber,
-  }) {
-    if (liveScore == null) {
-      return [];
-    }
-
-    final expectedEventsCount = liveScore.homeScore + liveScore.awayScore;
-
-    if (liveScore.pointScoringTeamIds.length == expectedEventsCount) {
-      return liveScore.pointScoringTeamIds;
-    }
-
-    return _syntheticPointEvents(
-      match: match,
-      currentSetNumber: currentSetNumber,
-      homeScore: liveScore.homeScore,
-      awayScore: liveScore.awayScore,
-    );
-  }
-
-  List<int> _syntheticPointEvents({
-    required ScoreboardMatchEntity match,
-    required int currentSetNumber,
-    required int homeScore,
-    required int awayScore,
-  }) {
-    final events = <int>[];
-    var remainingHomeScore = homeScore;
-    var remainingAwayScore = awayScore;
-    var nextTeamId = _initialServingTeamId(
-      match: match,
-      currentSetNumber: currentSetNumber,
-    );
-
-    while (remainingHomeScore > 0 || remainingAwayScore > 0) {
-      if (nextTeamId == match.homeTeam.id && remainingHomeScore > 0) {
-        events.add(match.homeTeam.id);
-        remainingHomeScore -= 1;
-      } else if (nextTeamId == match.awayTeam.id && remainingAwayScore > 0) {
-        events.add(match.awayTeam.id);
-        remainingAwayScore -= 1;
-      } else if (remainingHomeScore >= remainingAwayScore &&
-          remainingHomeScore > 0) {
-        events.add(match.homeTeam.id);
-        remainingHomeScore -= 1;
-      } else {
-        events.add(match.awayTeam.id);
-        remainingAwayScore -= 1;
-      }
-
-      nextTeamId = nextTeamId == match.homeTeam.id
-          ? match.awayTeam.id
-          : match.homeTeam.id;
-    }
-
-    return events;
-  }
-
   _RotationCount _rotationCountFromEvents({
     required ScoreboardMatchEntity match,
     required int currentSetNumber,
     required List<int> pointScoringTeamIds,
   }) {
-    var servingTeamId = _initialServingTeamId(
+    var servingTeamId = _pointEventNormalizer.initialServingTeamId(
       match: match,
       currentSetNumber: currentSetNumber,
     );
@@ -137,13 +84,6 @@ class RotationCalculator {
       homeRotationTurns: homeRotationTurns,
       awayRotationTurns: awayRotationTurns,
     );
-  }
-
-  int _initialServingTeamId({
-    required ScoreboardMatchEntity match,
-    required int currentSetNumber,
-  }) {
-    return currentSetNumber.isOdd ? match.awayTeam.id : match.homeTeam.id;
   }
 
   RotationTeamStateEntity _buildTeamState({
