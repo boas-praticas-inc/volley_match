@@ -45,11 +45,13 @@ class TeamDrawViewModel extends ChangeNotifier {
       return matchesSearch && matchesPosition;
     }).toList();
   }
+
   List<PlayerEntity> get selectedPlayers {
     return _allPlayers
         .where((player) => _selectedPlayerIds.contains(player.id))
         .toList();
   }
+
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   int get totalPlayersCount => _allPlayers.length;
@@ -100,9 +102,7 @@ class TeamDrawViewModel extends ChangeNotifier {
 
     try {
       _allPlayers = await _repository.getPlayers();
-      _selectedPlayerIds
-        ..clear()
-        ..addAll(_allPlayers.map((player) => player.id));
+      _selectedPlayerIds.clear();
     } catch (_) {
       _errorMessage = 'Não foi possível carregar os jogadores.';
     } finally {
