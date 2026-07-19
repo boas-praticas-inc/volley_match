@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import '../../data/repositories/players_repository_impl.dart';
+import '../../data/services/player_photo_storage.dart';
 import '../../domain/entities/player_entity.dart';
 import '../../domain/repositories/players_repository.dart';
 
@@ -18,6 +19,7 @@ class PlayersViewModel extends ChangeNotifier {
   ];
 
   final PlayersRepository _repository;
+  final PlayerPhotoStorage _photoStorage = PlayerPhotoStorage();
 
   List<PlayerEntity> _allPlayers = [];
 
@@ -95,7 +97,14 @@ class PlayersViewModel extends ChangeNotifier {
     }
 
     try {
+      final previousPhotoPath = _allPlayers[playerIndex].photoPath;
+
       await _repository.updatePlayer(updatedPlayer);
+
+      if (previousPhotoPath != updatedPlayer.photoPath) {
+        await _deletePhotoSafely(previousPhotoPath);
+      }
+
       _allPlayers = await _repository.getPlayers();
       _errorMessage = null;
       notifyListeners();
@@ -107,7 +116,19 @@ class PlayersViewModel extends ChangeNotifier {
 
   Future<void> removePlayer(int playerId) async {
     try {
+      PlayerEntity? playerToRemove;
+
+      for (final player in _allPlayers) {
+        if (player.id == playerId) {
+          playerToRemove = player;
+          break;
+        }
+      }
+
       await _repository.removePlayer(playerId);
+
+      await _deletePhotoSafely(playerToRemove?.photoPath);
+
       _allPlayers = await _repository.getPlayers();
       _errorMessage = null;
       notifyListeners();
@@ -125,5 +146,13 @@ class PlayersViewModel extends ChangeNotifier {
   void selectPosition(String position) {
     _selectedPosition = position;
     notifyListeners();
+  }
+
+  Future<void> _deletePhotoSafely(String? photoPath) async {
+    try {
+      await _photoStorage.deletePhoto(photoPath);
+    } catch (_) {
+      // Removing stale local files should not invalidate a saved player change.
+    }
   }
 }

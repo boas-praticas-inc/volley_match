@@ -58,6 +58,7 @@ class _EventPageState extends State<EventPage> {
       name: player.name,
       position: player.position,
       rotationOrder: player.rotationOrder,
+      photoPath: player.photoPath,
     );
   }
 

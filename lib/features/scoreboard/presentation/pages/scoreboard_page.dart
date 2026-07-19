@@ -62,6 +62,7 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
       name: player.name,
       position: player.position,
       rotationOrder: player.rotationOrder,
+      photoPath: player.photoPath,
     );
   }
 

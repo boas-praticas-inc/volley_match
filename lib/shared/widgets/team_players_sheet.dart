@@ -1,17 +1,20 @@
 import 'package:flutter/material.dart';
 
 import '../../core/theme/app_colors.dart';
+import 'player_photo_avatar.dart';
 
 class TeamPlayerViewData {
   const TeamPlayerViewData({
     required this.name,
     required this.position,
     required this.rotationOrder,
+    this.photoPath,
   });
 
   final String name;
   final String position;
   final int? rotationOrder;
+  final String? photoPath;
 }
 
 Future<void> showTeamPlayersSheet({
@@ -170,22 +173,39 @@ class _TeamPlayerTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: accentColor.withValues(alpha: 0.12),
-              shape: BoxShape.circle,
-            ),
-            child: Center(
-              child: Text(
-                '$order',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: accentColor,
-                  fontWeight: FontWeight.w900,
+          Stack(
+            clipBehavior: Clip.none,
+            children: [
+              PlayerPhotoAvatar(
+                name: player.name,
+                size: 44,
+                photoPath: player.photoPath,
+                backgroundColor: accentColor,
+              ),
+              Positioned(
+                right: -3,
+                bottom: -3,
+                child: Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: accentColor),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$order',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: accentColor,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
                 ),
               ),
-            ),
+            ],
           ),
           const SizedBox(width: 12),
           Expanded(

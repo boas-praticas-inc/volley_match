@@ -44,12 +44,14 @@ class ScoreboardPlayerEntity {
     required this.name,
     required this.position,
     required this.rotationOrder,
+    this.photoPath,
   });
 
   final int id;
   final String name;
   final String position;
   final int? rotationOrder;
+  final String? photoPath;
 }
 
 class ScoreboardSetEntity {

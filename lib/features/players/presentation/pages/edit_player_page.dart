@@ -5,16 +5,13 @@ import '../../domain/entities/player_entity.dart';
 import '../widgets/player_form.dart';
 
 class EditPlayerResult {
-  const EditPlayerResult._({
-    this.updatedPlayer,
-    this.removedPlayerId,
-  });
+  const EditPlayerResult._({this.updatedPlayer, this.removedPlayerId});
 
   const EditPlayerResult.updated(PlayerEntity player)
-      : this._(updatedPlayer: player);
+    : this._(updatedPlayer: player);
 
   const EditPlayerResult.removed(int playerId)
-      : this._(removedPlayerId: playerId);
+    : this._(removedPlayerId: playerId);
 
   final PlayerEntity? updatedPlayer;
   final int? removedPlayerId;
@@ -36,7 +33,7 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
       name: formData.name,
       skillRating: formData.skillRating,
       position: formData.position,
-      photoPath: widget.player.photoPath,
+      photoPath: formData.photoPath,
     );
 
     Navigator.of(context).pop(EditPlayerResult.updated(updatedPlayer));
@@ -58,9 +55,7 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
             ),
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(true),
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.danger,
-              ),
+              style: FilledButton.styleFrom(backgroundColor: AppColors.danger),
               child: const Text('Remover'),
             ),
           ],
@@ -82,9 +77,11 @@ class _EditPlayerPageState extends State<EditPlayerPage> {
     return Scaffold(
       appBar: AppBar(title: const Text('Editar Jogador')),
       body: PlayerForm(
+        playerId: widget.player.id,
         initialName: widget.player.name,
         initialPosition: widget.player.position,
         initialSkillRating: widget.player.skillRating,
+        initialPhotoPath: widget.player.photoPath,
         submitLabel: 'Salvar Alteracoes',
         onSubmit: _saveChanges,
         secondaryAction: Align(

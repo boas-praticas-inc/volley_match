@@ -53,6 +53,10 @@ class AppDatabase {
         if (oldVersion < 6) {
           await _createRotationSchema(db);
         }
+
+        if (oldVersion < 7) {
+          await _ensurePlayerPhotoColumn(db);
+        }
       },
     );
   }
@@ -73,6 +77,21 @@ class AppDatabase {
     await _createScoreboardSchema(db);
     await _createLiveScoreSchema(db);
     await _createRotationSchema(db);
+  }
+
+  Future<void> _ensurePlayerPhotoColumn(Database db) async {
+    final columns = await db.rawQuery(
+      'PRAGMA table_info(${DatabaseTables.players})',
+    );
+    final hasPhotoPathColumn = columns.any(
+      (column) => column['name'] == 'photo_path',
+    );
+
+    if (!hasPhotoPathColumn) {
+      await db.execute(
+        'ALTER TABLE ${DatabaseTables.players} ADD COLUMN photo_path TEXT',
+      );
+    }
   }
 
   Future<void> _createTeamDrawSchema(Database db) async {

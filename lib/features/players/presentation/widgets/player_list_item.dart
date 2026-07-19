@@ -1,14 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
+import 'package:volley_match/shared/widgets/player_photo_avatar.dart';
 
 import '../../domain/entities/player_entity.dart';
 
 class PlayerListItem extends StatelessWidget {
-  const PlayerListItem({
-    super.key,
-    required this.player,
-    required this.onTap,
-  });
+  const PlayerListItem({super.key, required this.player, required this.onTap});
 
   final PlayerEntity player;
   final VoidCallback onTap;
@@ -29,21 +26,10 @@ class PlayerListItem extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: const BoxDecoration(
-                  color: AppColors.primary,
-                  shape: BoxShape.circle,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  _initialsFromName(player.name),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
+              PlayerPhotoAvatar(
+                name: player.name,
+                size: 56,
+                photoPath: player.photoPath,
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -106,15 +92,5 @@ class PlayerListItem extends StatelessWidget {
         ),
       ),
     );
-  }
-
-  String _initialsFromName(String name) {
-    final parts = name.trim().split(' ');
-    if (parts.length == 1) {
-      return parts.first.substring(0, 1).toUpperCase();
-    }
-
-    return '${parts.first.substring(0, 1)}${parts.last.substring(0, 1)}'
-        .toUpperCase();
   }
 }

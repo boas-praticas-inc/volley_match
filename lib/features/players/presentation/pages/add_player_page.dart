@@ -14,6 +14,7 @@ class AddPlayerPage extends StatelessWidget {
       name: formData.name,
       skillRating: formData.skillRating,
       position: formData.position,
+      photoPath: formData.photoPath,
     );
 
     Navigator.of(context).pop(player);
@@ -24,6 +25,7 @@ class AddPlayerPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Adicionar Jogador')),
       body: PlayerForm(
+        playerId: nextPlayerId,
         submitLabel: 'Adicionar Jogador',
         onSubmit: (formData) => _submitForm(context, formData),
       ),

@@ -449,6 +449,7 @@ class EventLocalDataSource {
         players.id,
         players.name,
         players.position,
+        players.photo_path,
         player_teams.rotation_order
       FROM ${DatabaseTables.playerTeams} player_teams
       INNER JOIN ${DatabaseTables.players} players
@@ -469,6 +470,7 @@ class EventLocalDataSource {
         name: player['name'] as String,
         position: player['position'] as String,
         rotationOrder: player['rotation_order'] as int?,
+        photoPath: player['photo_path'] as String?,
       );
     }).toList();
   }

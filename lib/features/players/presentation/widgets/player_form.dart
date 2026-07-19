@@ -1,26 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
+import 'package:volley_match/shared/widgets/player_photo_avatar.dart';
+
+import '../../data/services/player_photo_storage.dart';
 
 class PlayerFormData {
   const PlayerFormData({
     required this.name,
     required this.position,
     required this.skillRating,
+    required this.photoPath,
   });
 
   final String name;
   final String position;
   final int skillRating;
+  final String? photoPath;
 }
 
 class PlayerForm extends StatefulWidget {
   const PlayerForm({
     super.key,
+    required this.playerId,
     required this.submitLabel,
     required this.onSubmit,
     this.initialName = '',
     this.initialPosition = _defaultPosition,
     this.initialSkillRating = 5,
+    this.initialPhotoPath,
     this.secondaryAction,
   });
 
@@ -33,11 +41,13 @@ class PlayerForm extends StatefulWidget {
     'Libero',
   ];
 
+  final int playerId;
   final String submitLabel;
   final ValueChanged<PlayerFormData> onSubmit;
   final String initialName;
   final String initialPosition;
   final int initialSkillRating;
+  final String? initialPhotoPath;
   final Widget? secondaryAction;
 
   @override
@@ -46,29 +56,112 @@ class PlayerForm extends StatefulWidget {
 
 class _PlayerFormState extends State<PlayerForm> {
   late final TextEditingController _nameController;
+  late final PlayerPhotoStorage _photoStorage;
   late String _selectedPosition;
   late double _skillRating;
+  String? _photoPath;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.initialName);
+    _nameController.addListener(_refreshAvatarFallback);
+    _photoStorage = PlayerPhotoStorage();
     _selectedPosition = widget.initialPosition;
     _skillRating = widget.initialSkillRating.toDouble();
+    _photoPath = widget.initialPhotoPath;
   }
 
   @override
   void dispose() {
+    _nameController.removeListener(_refreshAvatarFallback);
     _nameController.dispose();
     super.dispose();
   }
 
-  void _showPhotoPickerPlaceholder() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Seleção de foto será conectada na proxima iteração.'),
-      ),
+  void _refreshAvatarFallback() {
+    if (_photoPath == null || _photoPath!.trim().isEmpty) {
+      setState(() {});
+    }
+  }
+
+  Future<void> _showPhotoOptions() async {
+    final action = await showModalBottomSheet<_PhotoAction>(
+      context: context,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                ListTile(
+                  leading: const Icon(Icons.photo_library_outlined),
+                  title: const Text('Escolher da galeria'),
+                  onTap: () =>
+                      Navigator.of(sheetContext).pop(_PhotoAction.gallery),
+                ),
+                ListTile(
+                  leading: const Icon(Icons.photo_camera_outlined),
+                  title: const Text('Tirar foto'),
+                  onTap: () =>
+                      Navigator.of(sheetContext).pop(_PhotoAction.camera),
+                ),
+                if (_photoPath != null && _photoPath!.trim().isNotEmpty)
+                  ListTile(
+                    leading: const Icon(
+                      Icons.delete_outline,
+                      color: AppColors.danger,
+                    ),
+                    title: const Text('Remover foto'),
+                    textColor: AppColors.danger,
+                    onTap: () =>
+                        Navigator.of(sheetContext).pop(_PhotoAction.remove),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
+
+    switch (action) {
+      case _PhotoAction.gallery:
+        await _pickPhoto(ImageSource.gallery);
+      case _PhotoAction.camera:
+        await _pickPhoto(ImageSource.camera);
+      case _PhotoAction.remove:
+        setState(() {
+          _photoPath = null;
+        });
+      case null:
+        return;
+    }
+  }
+
+  Future<void> _pickPhoto(ImageSource source) async {
+    try {
+      final photoPath = await _photoStorage.pickAndStorePhoto(
+        playerId: widget.playerId,
+        source: source,
+      );
+
+      if (!mounted || photoPath == null) {
+        return;
+      }
+
+      setState(() {
+        _photoPath = photoPath;
+      });
+    } catch (_) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nao foi possivel carregar a foto.')),
+      );
+    }
   }
 
   void _submitForm() {
@@ -85,6 +178,7 @@ class _PlayerFormState extends State<PlayerForm> {
         name: name,
         position: _selectedPosition,
         skillRating: _skillRating.round(),
+        photoPath: _photoPath,
       ),
     );
   }
@@ -99,19 +193,12 @@ class _PlayerFormState extends State<PlayerForm> {
           child: Stack(
             clipBehavior: Clip.none,
             children: [
-              Container(
-                width: 112,
-                height: 112,
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceMuted,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: AppColors.borderLight),
-                ),
-                child: const Icon(
-                  Icons.person_outline,
-                  size: 48,
-                  color: AppColors.textSubtle,
-                ),
+              PlayerPhotoAvatar(
+                name: _nameController.text,
+                size: 112,
+                photoPath: _photoPath,
+                backgroundColor: AppColors.surfaceMuted,
+                icon: Icons.person_outline,
               ),
               Positioned(
                 right: 0,
@@ -121,7 +208,7 @@ class _PlayerFormState extends State<PlayerForm> {
                   shape: const CircleBorder(),
                   child: InkWell(
                     customBorder: const CircleBorder(),
-                    onTap: _showPhotoPickerPlaceholder,
+                    onTap: _showPhotoOptions,
                     child: const Padding(
                       padding: EdgeInsets.all(10),
                       child: Icon(
@@ -147,10 +234,10 @@ class _PlayerFormState extends State<PlayerForm> {
         ),
         const SizedBox(height: 20),
         Text(
-          'Posição',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          'Posicao',
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 24),
         Container(
@@ -194,16 +281,16 @@ class _PlayerFormState extends State<PlayerForm> {
         const SizedBox(height: 24),
         Text(
           'Habilidade',
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         Text(
           '${_skillRating.round()}/10',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: AppColors.textMuted,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: AppColors.textMuted),
         ),
         Slider(
           min: 1,
@@ -241,3 +328,5 @@ class _PlayerFormState extends State<PlayerForm> {
     );
   }
 }
+
+enum _PhotoAction { gallery, camera, remove }
