@@ -34,6 +34,7 @@ class ScoreboardViewModel extends ChangeNotifier {
   bool get isPaused => _isPaused;
   String? get errorMessage => _errorMessage;
   bool get hasMatch => _match != null;
+  bool get isReadOnly => _match?.status == 'finished';
 
   int get currentSetNumber => (_match?.completedSets.length ?? 0) + 1;
 
@@ -111,6 +112,7 @@ class ScoreboardViewModel extends ChangeNotifier {
   bool get canCloseSet {
     final activeMatch = _match;
     if (activeMatch == null ||
+        activeMatch.status == 'finished' ||
         matchWinnerTeamId != null ||
         _isSaving ||
         _isPaused) {
@@ -140,6 +142,15 @@ class ScoreboardViewModel extends ChangeNotifier {
         matchWinnerTeamId == null;
   }
 
+  bool get canEditScore {
+    final activeMatch = _match;
+    return activeMatch != null &&
+        activeMatch.status != 'finished' &&
+        !_isSaving &&
+        !_isPaused &&
+        matchWinnerTeamId == null;
+  }
+
   Future<void> loadMatch() async {
     _isLoading = true;
     _errorMessage = null;
@@ -153,9 +164,16 @@ class ScoreboardViewModel extends ChangeNotifier {
       if (_match == null) {
         _errorMessage = 'Nenhuma partida em andamento encontrada.';
       } else {
-        await _restoreLiveScore();
         _resetPauseState();
-        _startElapsedTimer();
+        _homeScore = 0;
+        _awayScore = 0;
+
+        if (_match?.status == 'in_progress') {
+          await _restoreLiveScore();
+          _startElapsedTimer();
+        } else {
+          _elapsedTimer?.cancel();
+        }
       }
     } catch (_) {
       _errorMessage = 'Nao foi possivel carregar o placar.';
@@ -166,7 +184,7 @@ class ScoreboardViewModel extends ChangeNotifier {
   }
 
   void incrementHomeScore() {
-    if (_isSaving || _isPaused || matchWinnerTeamId != null) {
+    if (!canEditScore) {
       return;
     }
 
@@ -176,10 +194,7 @@ class ScoreboardViewModel extends ChangeNotifier {
   }
 
   void decrementHomeScore() {
-    if (_homeScore == 0 ||
-        _isSaving ||
-        _isPaused ||
-        matchWinnerTeamId != null) {
+    if (_homeScore == 0 || !canEditScore) {
       return;
     }
 
@@ -189,7 +204,7 @@ class ScoreboardViewModel extends ChangeNotifier {
   }
 
   void incrementAwayScore() {
-    if (_isSaving || _isPaused || matchWinnerTeamId != null) {
+    if (!canEditScore) {
       return;
     }
 
@@ -199,10 +214,7 @@ class ScoreboardViewModel extends ChangeNotifier {
   }
 
   void decrementAwayScore() {
-    if (_awayScore == 0 ||
-        _isSaving ||
-        _isPaused ||
-        matchWinnerTeamId != null) {
+    if (_awayScore == 0 || !canEditScore) {
       return;
     }
 
@@ -367,7 +379,11 @@ class ScoreboardViewModel extends ChangeNotifier {
   }
 
   Duration _currentElapsedDuration(ScoreboardMatchEntity activeMatch) {
-    final now = _isPaused && _pausedAt != null ? _pausedAt! : DateTime.now();
+    final now = activeMatch.status == 'finished'
+        ? activeMatch.finishedAt ?? activeMatch.startedAt
+        : _isPaused && _pausedAt != null
+        ? _pausedAt!
+        : DateTime.now();
     final elapsed =
         now.difference(activeMatch.startedAt) - _totalPausedDuration;
 

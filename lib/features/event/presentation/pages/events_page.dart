@@ -115,7 +115,7 @@ class _EventsPageState extends State<EventsPage> {
                 TextField(
                   onChanged: viewModel.updateSearchQuery,
                   decoration: const InputDecoration(
-                    hintText: 'Buscar evento ou campeao...',
+                    hintText: 'Buscar evento...',
                     prefixIcon: Icon(Icons.search),
                   ),
                 ),
@@ -235,13 +235,6 @@ class _EventListCard extends StatelessWidget {
     final statusBackground = isInProgress
         ? AppColors.successBackground
         : AppColors.surfaceMuted;
-    final championName = event.championTeamName;
-    final championColor = championName == null
-        ? AppColors.textMuted
-        : AppColors.success;
-    final championBackground = championName == null
-        ? AppColors.surfaceMuted
-        : AppColors.successBackground;
 
     return Material(
       color: AppColors.surface,
@@ -319,7 +312,7 @@ class _EventListCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 5),
                             Text(
-                              '${_formatDate(event.date)} | ${event.totalTeams} times | ${event.totalMatches} partidas',
+                              _formatDate(event.date),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodyMedium
@@ -327,42 +320,6 @@ class _EventListCard extends StatelessWidget {
                                     color: AppColors.textMuted,
                                     fontWeight: FontWeight.w700,
                                   ),
-                            ),
-                            const SizedBox(height: 10),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 7,
-                              ),
-                              decoration: BoxDecoration(
-                                color: championBackground,
-                                borderRadius: BorderRadius.circular(999),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.emoji_events_outlined,
-                                    color: championColor,
-                                    size: 17,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Flexible(
-                                    child: Text(
-                                      championName ?? 'Campeao nao definido',
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .labelMedium
-                                          ?.copyWith(
-                                            color: championColor,
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                    ),
-                                  ),
-                                ],
-                              ),
                             ),
                           ],
                         ),

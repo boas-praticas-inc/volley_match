@@ -64,6 +64,7 @@ class ScoreboardLocalDataSource {
       homeTeam: teams[0],
       awayTeam: teams[1],
       startedAt: _dateTimeFromMatch(match),
+      finishedAt: _nullableDateTimeFrom(match['finished_at']),
       bestOfSets: match['best_of_sets'] as int,
       setsToWin: match['sets_to_win'] as int,
       pointsPerSet: match['points_per_set'] as int,
@@ -81,6 +82,14 @@ class ScoreboardLocalDataSource {
     }
 
     return DateTime.now();
+  }
+
+  DateTime? _nullableDateTimeFrom(Object? value) {
+    if (value is! String) {
+      return null;
+    }
+
+    return DateTime.tryParse(value);
   }
 
   Future<void> saveCompletedSet({

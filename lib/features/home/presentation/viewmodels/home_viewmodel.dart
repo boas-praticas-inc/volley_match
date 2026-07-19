@@ -25,24 +25,16 @@ class HomeViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final events = await _eventRepository.getRecentEvents();
+      final events = await _eventRepository.getRecentEvents(limit: 5);
 
       _recentEvents
         ..clear()
         ..addAll(
           events.map((event) {
-            final championTeamName = event.championTeamName;
-
             return HomeRecentEventItem(
               id: event.id,
               dateLabel: _formatDateLabel(event.date),
               eventLabel: event.name,
-              summaryLabel:
-                  '${event.totalTeams} times | ${event.totalMatches} partidas',
-              championLabel: championTeamName == null
-                  ? 'Campeao nao definido'
-                  : 'Campeao: $championTeamName',
-              hasChampion: championTeamName != null,
             );
           }),
         );

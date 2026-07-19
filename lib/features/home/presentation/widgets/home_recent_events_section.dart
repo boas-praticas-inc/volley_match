@@ -9,14 +9,14 @@ class HomeRecentEventsSection extends StatelessWidget {
     required this.events,
     required this.isLoading,
     required this.errorMessage,
-    required this.onRetry,
+    required this.onSeeAllTap,
     required this.onEventTap,
   });
 
   final List<HomeRecentEventItem> events;
   final bool isLoading;
   final String? errorMessage;
-  final VoidCallback onRetry;
+  final VoidCallback onSeeAllTap;
   final ValueChanged<HomeRecentEventItem> onEventTap;
 
   @override
@@ -32,7 +32,7 @@ class HomeRecentEventsSection extends StatelessWidget {
                 style: Theme.of(context).textTheme.headlineSmall,
               ),
             ),
-            TextButton(onPressed: onRetry, child: const Text('Atualizar')),
+            TextButton(onPressed: onSeeAllTap, child: const Text('Ver todos')),
           ],
         ),
         const SizedBox(height: 12),
@@ -73,13 +73,6 @@ class _RecentEventCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final championColor = event.hasChampion
-        ? AppColors.success
-        : AppColors.textMuted;
-    final championBackground = event.hasChampion
-        ? AppColors.successBackground
-        : AppColors.surfaceMuted;
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -115,6 +108,14 @@ class _RecentEventCard extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
+                          event.eventLabel,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w900),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
                           event.dateLabel,
                           style: Theme.of(context).textTheme.bodyMedium
                               ?.copyWith(
@@ -122,64 +123,12 @@ class _RecentEventCard extends StatelessWidget {
                                 fontWeight: FontWeight.w700,
                               ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          event.eventLabel,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: Theme.of(context).textTheme.titleLarge
-                              ?.copyWith(fontWeight: FontWeight.w900),
-                        ),
                       ],
                     ),
                   ),
                   const SizedBox(width: 8),
                   const Icon(Icons.chevron_right, color: AppColors.textSubtle),
                 ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                event.summaryLabel,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.textMuted,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                decoration: BoxDecoration(
-                  color: championBackground,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: championColor.withValues(alpha: 0.20),
-                  ),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.emoji_events_outlined,
-                      color: championColor,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        event.championLabel,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: championColor,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),

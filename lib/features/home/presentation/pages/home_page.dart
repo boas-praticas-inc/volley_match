@@ -43,6 +43,11 @@ class _HomePageState extends State<HomePage> {
     await viewModel.loadRecentEvents();
   }
 
+  Future<void> _openEvents() async {
+    await Navigator.of(context).pushNamed(AppRoutes.events);
+    await viewModel.loadRecentEvents();
+  }
+
   @override
   Widget build(BuildContext context) {
     return FeatureNavBar(
@@ -60,7 +65,7 @@ class _HomePageState extends State<HomePage> {
                 events: viewModel.recentEvents,
                 isLoading: viewModel.isLoadingRecentEvents,
                 errorMessage: viewModel.recentEventsErrorMessage,
-                onRetry: viewModel.loadRecentEvents,
+                onSeeAllTap: _openEvents,
                 onEventTap: _openEvent,
               ),
             ],

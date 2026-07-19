@@ -3,6 +3,7 @@ import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../../../core/router/app_routes.dart';
 import '../../../../shared/widgets/feature_navBar.dart';
+import '../../../scoreboard/presentation/pages/scoreboard_page.dart';
 import '../../domain/entities/event_progress_entity.dart';
 import '../viewmodels/event_viewmodel.dart';
 
@@ -33,6 +34,13 @@ class _EventPageState extends State<EventPage> {
 
   void _openNewDraw() {
     Navigator.of(context).pushReplacementNamed(AppRoutes.teamDraw);
+  }
+
+  Future<void> _openMatch(EventMatchProgressEntity match) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => ScoreboardPage(matchId: match.id)),
+    );
+    await viewModel.loadEvent(eventId: widget.eventId);
   }
 
   Future<void> _editEventName(EventProgressEntity progress) async {
@@ -160,14 +168,17 @@ class _EventPageState extends State<EventPage> {
                 _CurrentMatchCard(match: progress.currentMatch),
                 const SizedBox(height: 18),
                 _SectionTitle(
-                  title: 'Times no evento',
-                  subtitle: _queueSubtitle(progress),
+                  title: 'Ranking dos times',
+                  subtitle: '${progress.totalTeams} times',
                 ),
                 const SizedBox(height: 12),
-                ..._orderedTeams(progress.teams).map((team) {
+                ..._rankedTeams(progress.teams).asMap().entries.map((entry) {
+                  final position = entry.key + 1;
+                  final team = entry.value;
+
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 12),
-                    child: _TeamProgressCard(team: team),
+                    child: _TeamRankingCard(team: team, position: position),
                   );
                 }),
                 const SizedBox(height: 6),
@@ -182,7 +193,10 @@ class _EventPageState extends State<EventPage> {
                   ...progress.matches.reversed.map((match) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 12),
-                      child: _MatchHistoryCard(match: match),
+                      child: _MatchHistoryCard(
+                        match: match,
+                        onTap: () => _openMatch(match),
+                      ),
                     );
                   }),
                 if (progress.status == 'in_progress') ...[
@@ -202,39 +216,27 @@ class _EventPageState extends State<EventPage> {
     );
   }
 
-  String _queueSubtitle(EventProgressEntity progress) {
-    final waitingTeams = progress.teams.where((team) => !team.isPlaying).length;
-
-    if (progress.currentMatch == null) {
-      return '$waitingTeams times aguardando';
-    }
-
-    return 'Vencedor fica, proximo da fila entra';
-  }
-
-  List<EventTeamProgressEntity> _orderedTeams(
+  List<EventTeamProgressEntity> _rankedTeams(
     List<EventTeamProgressEntity> teams,
   ) {
     final orderedTeams = [...teams];
 
     orderedTeams.sort((first, second) {
-      if (first.isPlaying && !second.isPlaying) {
-        return -1;
+      final winsComparison = second.wins.compareTo(first.wins);
+
+      if (winsComparison != 0) {
+        return winsComparison;
       }
 
-      if (!first.isPlaying && second.isPlaying) {
-        return 1;
+      final matchesComparison = first.matchesPlayed.compareTo(
+        second.matchesPlayed,
+      );
+
+      if (matchesComparison != 0) {
+        return matchesComparison;
       }
 
-      final firstOrder = first.waitingOrder ?? 9999;
-      final secondOrder = second.waitingOrder ?? 9999;
-      final orderComparison = firstOrder.compareTo(secondOrder);
-
-      if (orderComparison != 0) {
-        return orderComparison;
-      }
-
-      return first.id.compareTo(second.id);
+      return first.name.toLowerCase().compareTo(second.name.toLowerCase());
     });
 
     return orderedTeams;
@@ -646,20 +648,19 @@ class _SectionTitle extends StatelessWidget {
   }
 }
 
-class _TeamProgressCard extends StatelessWidget {
-  const _TeamProgressCard({required this.team});
+class _TeamRankingCard extends StatelessWidget {
+  const _TeamRankingCard({required this.team, required this.position});
 
   final EventTeamProgressEntity team;
+  final int position;
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = team.isPlaying ? AppColors.success : AppColors.primary;
-    final statusBackground = team.isPlaying
+    final isLeader = position == 1;
+    final rankColor = isLeader ? AppColors.success : AppColors.primary;
+    final rankBackground = isLeader
         ? AppColors.successBackground
         : AppColors.primary.withValues(alpha: 0.10);
-    final statusLabel = team.isPlaying
-        ? 'Jogando'
-        : 'Fila ${team.waitingOrder ?? '-'}';
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -674,14 +675,17 @@ class _TeamProgressCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: statusBackground,
+              color: rankBackground,
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              team.isPlaying
-                  ? Icons.sports_volleyball_outlined
-                  : Icons.queue_play_next_outlined,
-              color: statusColor,
+            child: Center(
+              child: Text(
+                '$position',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: rankColor,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
           ),
           const SizedBox(width: 14),
@@ -712,15 +716,28 @@ class _TeamProgressCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
             decoration: BoxDecoration(
-              color: statusBackground,
+              color: rankBackground,
               borderRadius: BorderRadius.circular(999),
             ),
-            child: Text(
-              statusLabel,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                color: statusColor,
-                fontWeight: FontWeight.w900,
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isLeader
+                      ? Icons.emoji_events_outlined
+                      : Icons.leaderboard_outlined,
+                  color: rankColor,
+                  size: 16,
+                ),
+                const SizedBox(width: 5),
+                Text(
+                  '${team.wins}V',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: rankColor,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -730,9 +747,10 @@ class _TeamProgressCard extends StatelessWidget {
 }
 
 class _MatchHistoryCard extends StatelessWidget {
-  const _MatchHistoryCard({required this.match});
+  const _MatchHistoryCard({required this.match, required this.onTap});
 
   final EventMatchProgressEntity match;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -742,70 +760,91 @@ class _MatchHistoryCard extends StatelessWidget {
         ? AppColors.successBackground
         : AppColors.surfaceMuted;
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(
-          color: isActive
-              ? AppColors.success.withValues(alpha: 0.32)
-              : AppColors.borderLight,
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+        child: Ink(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(
+              color: isActive
+                  ? AppColors.success.withValues(alpha: 0.32)
+                  : AppColors.borderLight,
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                child: Text(
-                  '${match.homeTeamName} x ${match.awayTeamName}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
+              Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      '${match.homeTeamName} x ${match.awayTeamName}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
                   ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: statusBackground,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      isActive ? 'Atual' : 'Finalizada',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: statusColor,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withValues(alpha: 0.10),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.visibility_outlined,
+                      color: AppColors.primary,
+                      size: 16,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Sets ${match.scoreLabel}${match.winnerTeamName == null ? '' : ' | venceu ${match.winnerTeamName}'}',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppColors.textMuted,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 10,
-                  vertical: 6,
+              if (match.completedSets.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: match.completedSets.map((set) {
+                    return _SetScorePill(set: set);
+                  }).toList(),
                 ),
-                decoration: BoxDecoration(
-                  color: statusBackground,
-                  borderRadius: BorderRadius.circular(999),
-                ),
-                child: Text(
-                  isActive ? 'Atual' : 'Finalizada',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: statusColor,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
+              ],
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            'Sets ${match.scoreLabel}${match.winnerTeamName == null ? '' : ' | venceu ${match.winnerTeamName}'}',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: AppColors.textMuted,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          if (match.completedSets.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: match.completedSets.map((set) {
-                return _SetScorePill(set: set);
-              }).toList(),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }

@@ -76,8 +76,10 @@ class PortraitScoreboard extends StatelessWidget {
             _WinnerCard(winnerName: viewModel.winnerName!),
           ],
           const Spacer(),
-          const SizedBox(height: 12),
-          _MatchControlCenter(viewModel: viewModel),
+          if (!viewModel.isReadOnly) ...[
+            const SizedBox(height: 12),
+            _MatchControlCenter(viewModel: viewModel),
+          ],
         ],
       ),
     );
@@ -121,12 +123,12 @@ class _ScoreCard extends StatelessWidget {
                       score: viewModel.homeScore,
                       setsWon: viewModel.homeSetsWon,
                       accentColor: AppColors.primary,
-                      onIncrement: viewModel.isPaused
-                          ? null
-                          : viewModel.incrementHomeScore,
-                      onDecrement: viewModel.isPaused
-                          ? null
-                          : viewModel.decrementHomeScore,
+                      onIncrement: viewModel.canEditScore
+                          ? viewModel.incrementHomeScore
+                          : null,
+                      onDecrement: viewModel.canEditScore
+                          ? viewModel.decrementHomeScore
+                          : null,
                     ),
                   ),
                   Container(width: 1, color: AppColors.borderLight),
@@ -136,12 +138,12 @@ class _ScoreCard extends StatelessWidget {
                       score: viewModel.awayScore,
                       setsWon: viewModel.awaySetsWon,
                       accentColor: AppColors.danger,
-                      onIncrement: viewModel.isPaused
-                          ? null
-                          : viewModel.incrementAwayScore,
-                      onDecrement: viewModel.isPaused
-                          ? null
-                          : viewModel.decrementAwayScore,
+                      onIncrement: viewModel.canEditScore
+                          ? viewModel.incrementAwayScore
+                          : null,
+                      onDecrement: viewModel.canEditScore
+                          ? viewModel.decrementAwayScore
+                          : null,
                     ),
                   ),
                 ],
@@ -206,7 +208,7 @@ class _MatchHeader extends StatelessWidget {
             child: Column(
               children: [
                 Text(
-                  'Partida',
+                  viewModel.isReadOnly ? 'Finalizada' : 'Partida',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
@@ -847,12 +849,12 @@ class LandscapeScoreboard extends StatelessWidget {
                 setsWon: viewModel.homeSetsWon,
                 backgroundColor: const Color(0xFF17275D),
                 accentColor: AppColors.primary,
-                onIncrement: viewModel.isPaused
-                    ? null
-                    : viewModel.incrementHomeScore,
-                onDecrement: viewModel.isPaused
-                    ? null
-                    : viewModel.decrementHomeScore,
+                onIncrement: viewModel.canEditScore
+                    ? viewModel.incrementHomeScore
+                    : null,
+                onDecrement: viewModel.canEditScore
+                    ? viewModel.decrementHomeScore
+                    : null,
               ),
             ),
             Expanded(
@@ -862,12 +864,12 @@ class LandscapeScoreboard extends StatelessWidget {
                 setsWon: viewModel.awaySetsWon,
                 backgroundColor: const Color(0xFF7A0710),
                 accentColor: const Color(0xFFFF1F2D),
-                onIncrement: viewModel.isPaused
-                    ? null
-                    : viewModel.incrementAwayScore,
-                onDecrement: viewModel.isPaused
-                    ? null
-                    : viewModel.decrementAwayScore,
+                onIncrement: viewModel.canEditScore
+                    ? viewModel.incrementAwayScore
+                    : null,
+                onDecrement: viewModel.canEditScore
+                    ? viewModel.decrementAwayScore
+                    : null,
               ),
             ),
           ],
