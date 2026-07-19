@@ -22,12 +22,16 @@ class ScoreboardViewModel extends ChangeNotifier {
   String? _errorMessage;
   Timer? _elapsedTimer;
   Future<void> _liveScoreSaveQueue = Future.value();
+  bool _isPaused = false;
+  DateTime? _pausedAt;
+  Duration _totalPausedDuration = Duration.zero;
 
   ScoreboardMatchEntity? get match => _match;
   int get homeScore => _homeScore;
   int get awayScore => _awayScore;
   bool get isLoading => _isLoading;
   bool get isSaving => _isSaving;
+  bool get isPaused => _isPaused;
   String? get errorMessage => _errorMessage;
   bool get hasMatch => _match != null;
 
@@ -40,7 +44,7 @@ class ScoreboardViewModel extends ChangeNotifier {
       return '00:00';
     }
 
-    final elapsed = DateTime.now().difference(activeMatch.startedAt);
+    final elapsed = _currentElapsedDuration(activeMatch);
     final hours = elapsed.inHours;
     final minutes = elapsed.inMinutes.remainder(60).toString().padLeft(2, '0');
     final seconds = elapsed.inSeconds.remainder(60).toString().padLeft(2, '0');
@@ -106,7 +110,10 @@ class ScoreboardViewModel extends ChangeNotifier {
 
   bool get canCloseSet {
     final activeMatch = _match;
-    if (activeMatch == null || matchWinnerTeamId != null || _isSaving) {
+    if (activeMatch == null ||
+        matchWinnerTeamId != null ||
+        _isSaving ||
+        _isPaused) {
       return false;
     }
 
@@ -121,7 +128,16 @@ class ScoreboardViewModel extends ChangeNotifier {
     return activeMatch != null &&
         activeMatch.status != 'finished' &&
         matchWinnerTeamId != null &&
-        !_isSaving;
+        !_isSaving &&
+        !_isPaused;
+  }
+
+  bool get canTogglePause {
+    final activeMatch = _match;
+    return activeMatch != null &&
+        activeMatch.status != 'finished' &&
+        !_isSaving &&
+        matchWinnerTeamId == null;
   }
 
   Future<void> loadMatch() async {
@@ -138,6 +154,7 @@ class ScoreboardViewModel extends ChangeNotifier {
         _errorMessage = 'Nenhuma partida em andamento encontrada.';
       } else {
         await _restoreLiveScore();
+        _resetPauseState();
         _startElapsedTimer();
       }
     } catch (_) {
@@ -149,7 +166,7 @@ class ScoreboardViewModel extends ChangeNotifier {
   }
 
   void incrementHomeScore() {
-    if (_isSaving || matchWinnerTeamId != null) {
+    if (_isSaving || _isPaused || matchWinnerTeamId != null) {
       return;
     }
 
@@ -159,7 +176,10 @@ class ScoreboardViewModel extends ChangeNotifier {
   }
 
   void decrementHomeScore() {
-    if (_homeScore == 0 || _isSaving || matchWinnerTeamId != null) {
+    if (_homeScore == 0 ||
+        _isSaving ||
+        _isPaused ||
+        matchWinnerTeamId != null) {
       return;
     }
 
@@ -169,7 +189,7 @@ class ScoreboardViewModel extends ChangeNotifier {
   }
 
   void incrementAwayScore() {
-    if (_isSaving || matchWinnerTeamId != null) {
+    if (_isSaving || _isPaused || matchWinnerTeamId != null) {
       return;
     }
 
@@ -179,7 +199,10 @@ class ScoreboardViewModel extends ChangeNotifier {
   }
 
   void decrementAwayScore() {
-    if (_awayScore == 0 || _isSaving || matchWinnerTeamId != null) {
+    if (_awayScore == 0 ||
+        _isSaving ||
+        _isPaused ||
+        matchWinnerTeamId != null) {
       return;
     }
 
@@ -219,6 +242,7 @@ class ScoreboardViewModel extends ChangeNotifier {
       _homeScore = 0;
       _awayScore = 0;
       _match = await _repository.getMatchScoreboard(activeMatch.matchId);
+      _resetPauseState();
     } catch (_) {
       _errorMessage = 'Nao foi possivel salvar o set.';
     } finally {
@@ -247,6 +271,7 @@ class ScoreboardViewModel extends ChangeNotifier {
       await _repository.clearLiveScore(activeMatch.matchId);
       _homeScore = 0;
       _awayScore = 0;
+      _resetPauseState();
       _match =
           nextMatch ??
           await _repository.getMatchScoreboard(activeMatch.matchId);
@@ -269,6 +294,30 @@ class ScoreboardViewModel extends ChangeNotifier {
     _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       notifyListeners();
     });
+  }
+
+  void togglePause() {
+    if (!canTogglePause) {
+      return;
+    }
+
+    if (_isPaused) {
+      final pausedAt = _pausedAt;
+
+      if (pausedAt != null) {
+        _totalPausedDuration += DateTime.now().difference(pausedAt);
+      }
+
+      _isPaused = false;
+      _pausedAt = null;
+      _startElapsedTimer();
+    } else {
+      _isPaused = true;
+      _pausedAt = DateTime.now();
+      _elapsedTimer?.cancel();
+    }
+
+    notifyListeners();
   }
 
   Future<void> _restoreLiveScore() async {
@@ -315,6 +364,24 @@ class ScoreboardViewModel extends ChangeNotifier {
   void _enqueueLiveScoreSave() {
     _liveScoreSaveQueue = _liveScoreSaveQueue.then((_) => _saveLiveScore());
     unawaited(_liveScoreSaveQueue);
+  }
+
+  Duration _currentElapsedDuration(ScoreboardMatchEntity activeMatch) {
+    final now = _isPaused && _pausedAt != null ? _pausedAt! : DateTime.now();
+    final elapsed =
+        now.difference(activeMatch.startedAt) - _totalPausedDuration;
+
+    if (elapsed.isNegative) {
+      return Duration.zero;
+    }
+
+    return elapsed;
+  }
+
+  void _resetPauseState() {
+    _isPaused = false;
+    _pausedAt = null;
+    _totalPausedDuration = Duration.zero;
   }
 
   @override
