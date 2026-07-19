@@ -17,6 +17,18 @@ class EventProgressEntity {
   final List<EventMatchProgressEntity> matches;
   final EventMatchProgressEntity? currentMatch;
 
+  EventProgressEntity copyWith({String? name}) {
+    return EventProgressEntity(
+      eventId: eventId,
+      name: name ?? this.name,
+      status: status,
+      startedAt: startedAt,
+      teams: teams,
+      matches: matches,
+      currentMatch: currentMatch,
+    );
+  }
+
   int get totalTeams => teams.length;
 
   int get totalMatches => matches.length;

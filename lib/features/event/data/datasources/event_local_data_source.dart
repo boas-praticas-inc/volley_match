@@ -4,6 +4,7 @@ import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
 import '../../domain/entities/event_match_configuration_entity.dart';
 import '../../domain/entities/event_progress_entity.dart';
+import '../../domain/entities/recent_event_entity.dart';
 
 class EventLocalDataSource {
   EventLocalDataSource({AppDatabase? appDatabase})
@@ -69,6 +70,69 @@ class EventLocalDataSource {
     }
 
     return _buildEventProgress(db, event);
+  }
+
+  Future<EventProgressEntity?> getEventProgress(int eventId) async {
+    final db = await _database;
+    final events = await db.query(
+      DatabaseTables.events,
+      where: 'id = ?',
+      whereArgs: [eventId],
+      limit: 1,
+    );
+
+    if (events.isEmpty) {
+      return null;
+    }
+
+    return _buildEventProgress(db, events.first);
+  }
+
+  Future<List<RecentEventEntity>> getRecentEvents({int limit = 5}) async {
+    final db = await _database;
+    final events = await db.query(
+      DatabaseTables.events,
+      where: 'status = ?',
+      whereArgs: ['finished'],
+      orderBy: 'datetime(updated_at) DESC, id DESC',
+      limit: limit,
+    );
+
+    final recentEvents = <RecentEventEntity>[];
+
+    for (final event in events) {
+      final eventId = event['id'] as int;
+      final counters = await _getEventCounters(db, eventId);
+      final championTeamName = await _getEventChampionTeamName(db, eventId);
+
+      recentEvents.add(
+        RecentEventEntity(
+          id: eventId,
+          name: event['name'] as String,
+          date: _dateTimeFrom(event['event_date']),
+          status: event['status'] as String,
+          totalTeams: counters.teams,
+          totalMatches: counters.matches,
+          championTeamName: championTeamName,
+        ),
+      );
+    }
+
+    return recentEvents;
+  }
+
+  Future<void> updateEventName({
+    required int eventId,
+    required String name,
+  }) async {
+    final db = await _database;
+
+    await db.update(
+      DatabaseTables.events,
+      {'name': name, 'updated_at': DateTime.now().toIso8601String()},
+      where: 'id = ?',
+      whereArgs: [eventId],
+    );
   }
 
   Future<void> finishEvent(int eventId) async {
@@ -141,6 +205,52 @@ class EventLocalDataSource {
     }
 
     return activeEvents.first;
+  }
+
+  Future<_EventCounters> _getEventCounters(
+    DatabaseExecutor db,
+    int eventId,
+  ) async {
+    final teamCounter = Sqflite.firstIntValue(
+      await db.rawQuery(
+        'SELECT COUNT(*) FROM ${DatabaseTables.teams} WHERE event_id = ?',
+        [eventId],
+      ),
+    );
+    final matchCounter = Sqflite.firstIntValue(
+      await db.rawQuery(
+        'SELECT COUNT(*) FROM ${DatabaseTables.matches} WHERE event_id = ?',
+        [eventId],
+      ),
+    );
+
+    return _EventCounters(teams: teamCounter ?? 0, matches: matchCounter ?? 0);
+  }
+
+  Future<String?> _getEventChampionTeamName(
+    DatabaseExecutor db,
+    int eventId,
+  ) async {
+    final result = await db.rawQuery(
+      '''
+      SELECT teams.name
+      FROM ${DatabaseTables.matches} matches
+      INNER JOIN ${DatabaseTables.teams} teams
+        ON teams.id = matches.winner_team_id
+      WHERE matches.event_id = ?
+        AND matches.winner_team_id IS NOT NULL
+      ORDER BY datetime(COALESCE(matches.finished_at, matches.updated_at, matches.started_at)) DESC,
+        matches.id DESC
+      LIMIT 1
+      ''',
+      [eventId],
+    );
+
+    if (result.isEmpty) {
+      return null;
+    }
+
+    return result.first['name'] as String;
   }
 
   Future<EventProgressEntity> _buildEventProgress(
@@ -401,4 +511,11 @@ class _EventMatchTeamRow {
 
   final int id;
   final String name;
+}
+
+class _EventCounters {
+  const _EventCounters({required this.teams, required this.matches});
+
+  final int teams;
+  final int matches;
 }

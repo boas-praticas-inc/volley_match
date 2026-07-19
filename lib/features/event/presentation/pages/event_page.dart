@@ -7,7 +7,9 @@ import '../../domain/entities/event_progress_entity.dart';
 import '../viewmodels/event_viewmodel.dart';
 
 class EventPage extends StatefulWidget {
-  const EventPage({super.key});
+  const EventPage({super.key, this.eventId});
+
+  final int? eventId;
 
   @override
   State<EventPage> createState() => _EventPageState();
@@ -20,7 +22,7 @@ class _EventPageState extends State<EventPage> {
   void initState() {
     super.initState();
     viewModel = EventViewModel();
-    viewModel.loadActiveEvent();
+    viewModel.loadEvent(eventId: widget.eventId);
   }
 
   @override
@@ -31,6 +33,38 @@ class _EventPageState extends State<EventPage> {
 
   void _openNewDraw() {
     Navigator.of(context).pushReplacementNamed(AppRoutes.teamDraw);
+  }
+
+  Future<void> _editEventName(EventProgressEntity progress) async {
+    final updatedName = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return _EditEventNameDialog(initialName: progress.name);
+      },
+    );
+
+    if (updatedName == null || updatedName.trim().isEmpty) {
+      return;
+    }
+
+    final saved = await viewModel.updateEventName(
+      eventId: progress.eventId,
+      name: updatedName,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          saved
+              ? 'Nome do evento atualizado.'
+              : 'Nao foi possivel atualizar o nome do evento.',
+        ),
+      ),
+    );
   }
 
   Future<void> _confirmFinishEvent(EventProgressEntity progress) async {
@@ -89,7 +123,7 @@ class _EventPageState extends State<EventPage> {
         title: const Text('Evento'),
         actions: [
           IconButton(
-            onPressed: viewModel.loadActiveEvent,
+            onPressed: () => viewModel.loadEvent(eventId: widget.eventId),
             icon: const Icon(Icons.refresh),
           ),
         ],
@@ -113,11 +147,15 @@ class _EventPageState extends State<EventPage> {
           }
 
           return RefreshIndicator(
-            onRefresh: viewModel.loadActiveEvent,
+            onRefresh: () => viewModel.loadEvent(eventId: widget.eventId),
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
               children: [
-                _EventSummary(progress: progress),
+                _EventSummary(
+                  progress: progress,
+                  isRenaming: viewModel.isRenaming,
+                  onEditName: () => _editEventName(progress),
+                ),
                 const SizedBox(height: 16),
                 _CurrentMatchCard(match: progress.currentMatch),
                 const SizedBox(height: 18),
@@ -147,13 +185,15 @@ class _EventPageState extends State<EventPage> {
                       child: _MatchHistoryCard(match: match),
                     );
                   }),
-                const SizedBox(height: 8),
-                _FinishEventButton(
-                  isLoading: viewModel.isFinishing,
-                  onTap: viewModel.isFinishing
-                      ? null
-                      : () => _confirmFinishEvent(progress),
-                ),
+                if (progress.status == 'in_progress') ...[
+                  const SizedBox(height: 8),
+                  _FinishEventButton(
+                    isLoading: viewModel.isFinishing,
+                    onTap: viewModel.isFinishing
+                        ? null
+                        : () => _confirmFinishEvent(progress),
+                  ),
+                ],
               ],
             ),
           );
@@ -201,6 +241,59 @@ class _EventPageState extends State<EventPage> {
   }
 }
 
+class _EditEventNameDialog extends StatefulWidget {
+  const _EditEventNameDialog({required this.initialName});
+
+  final String initialName;
+
+  @override
+  State<_EditEventNameDialog> createState() => _EditEventNameDialogState();
+}
+
+class _EditEventNameDialogState extends State<_EditEventNameDialog> {
+  late final TextEditingController controller;
+
+  @override
+  void initState() {
+    super.initState();
+    controller = TextEditingController(text: widget.initialName);
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Editar nome do evento'),
+      content: TextField(
+        controller: controller,
+        autofocus: true,
+        textCapitalization: TextCapitalization.sentences,
+        decoration: const InputDecoration(hintText: 'Nome do evento'),
+        onSubmitted: (value) {
+          Navigator.of(context).pop(value.trim());
+        },
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancelar'),
+        ),
+        FilledButton(
+          onPressed: () {
+            Navigator.of(context).pop(controller.text.trim());
+          },
+          child: const Text('Salvar'),
+        ),
+      ],
+    );
+  }
+}
+
 class _FinishEventButton extends StatelessWidget {
   const _FinishEventButton({required this.isLoading, required this.onTap});
 
@@ -235,9 +328,15 @@ class _FinishEventButton extends StatelessWidget {
 }
 
 class _EventSummary extends StatelessWidget {
-  const _EventSummary({required this.progress});
+  const _EventSummary({
+    required this.progress,
+    required this.isRenaming,
+    required this.onEditName,
+  });
 
   final EventProgressEntity progress;
+  final bool isRenaming;
+  final VoidCallback onEditName;
 
   @override
   Widget build(BuildContext context) {
@@ -251,12 +350,52 @@ class _EventSummary extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            progress.name,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  progress.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: isRenaming ? null : onEditName,
+                  customBorder: const CircleBorder(),
+                  child: Ink(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.16),
+                      ),
+                    ),
+                    child: isRenaming
+                        ? const Padding(
+                            padding: EdgeInsets.all(11),
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          )
+                        : const Icon(
+                            Icons.edit_outlined,
+                            color: Colors.white,
+                            size: 20,
+                          ),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Row(

@@ -36,7 +36,8 @@ class AppRouter {
       case AppRoutes.rotationGuide:
         return MaterialPageRoute(builder: (_) => const RotationGuidePage());
       case AppRoutes.events:
-        return MaterialPageRoute(builder: (_) => const EventPage());
+        final eventId = settings.arguments as int?;
+        return MaterialPageRoute(builder: (_) => EventPage(eventId: eventId));
       case AppRoutes.matches:
         return MaterialPageRoute(builder: (_) => const MatchPage());
       default:
