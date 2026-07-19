@@ -1,6 +1,6 @@
 # Status do Projeto - Volley Match
 
-Atualizado em 16/07/2026.
+Atualizado em 19/07/2026.
 
 ## Objetivo do app
 
@@ -18,7 +18,7 @@ O `Volley Match` e um aplicativo Flutter para organizar partidas recreativas de 
 - Dependencias principais adicionadas em `pubspec.yaml`: `sqflite` e `path`.
 - Tema global configurado com `Material 3` em `lib/core/theme/`.
 - Roteamento centralizado em `lib/core/router/`.
-- Estrutura arquitetural `feature-first + MVVM` criada para todas as features.
+- Estrutura arquitetural `feature-first + MVVM + Repository` criada para todas as features.
 - Componentes compartilhados criados em `lib/shared/widgets/`.
 
 ### Navegacao e shell do app
@@ -114,7 +114,9 @@ Hoje elas funcionam como casca de interface para indicar responsabilidade futura
 ## Padrao do projeto
 
 ## Arquitetura
-O projeto segue o padrao `feature-first + MVVM`.
+O projeto segue oficialmente o padrao eature-first + MVVM + Repository.
+
+A decisao registrada em 19/07/2026 e nao seguir Clean Architecture completa neste momento. A camada `domain/usecases/` nao faz parte do padrao oficial; regras puras devem ir para `domain/services/`, e operacoes simples de dados devem ser chamadas diretamente via repository pelo ViewModel.
 
 Cada feature deve ficar isolada em sua propria pasta dentro de `lib/features/`.
 
@@ -129,7 +131,7 @@ feature/
   domain/
     entities/
     repositories/
-    usecases/
+    services/
   presentation/
     pages/
     viewmodels/
@@ -138,13 +140,16 @@ feature/
 
 Responsabilidades por camada:
 - `data`: acesso a banco, mapeamento de modelos e implementacao de repositorios.
-- `domain`: entidades e contratos de negocio.
+- `domain`: entidades, contratos de repositorio e services de dominio puros.
 - `presentation`: telas, widgets e viewmodels.
 
 ## Convencoes de implementacao
 - Novas features devem seguir a mesma estrutura de pastas ja criada.
 - Regras de acesso a dados devem passar por `repository`, nao diretamente pela UI.
-- A UI deve conversar com `viewmodels`, nao com `datasources`.
+- A UI deve conversar com iewmodels, nao com datasources.
+- ViewModels podem chamar repositories diretamente para operacoes de dados simples.
+- Regras de negocio puras e reutilizaveis devem ficar em `domain/services/`.
+- Novos `UseCase` wrappers nao devem ser criados para apenas repassar chamadas ao repository.
 - Entidades de dominio devem permanecer simples e independentes da camada visual.
 - Modelos de dados devem ser responsaveis por serializacao e desserializacao.
 - Widgets reutilizaveis devem ir para `shared/widgets/` quando fizerem sentido fora de uma feature.
@@ -264,7 +269,7 @@ Regra importante:
 - `README.md`: visao geral do projeto.
 - `docs/Escopo_Aplicativo_Volei.pdf`: documento de escopo funcional.
 - `docs/modelagem_dos_dados_volleyMatch.pdf`: referencia de modelagem dos dados.
-- `docs/Telas de Alto Nível/`: material de alto nivel das telas.
+- `docs/Telas de Alto NÃ­vel/`: material de alto nivel das telas.
 
 ## Proxima acao sugerida
 

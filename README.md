@@ -6,7 +6,7 @@ Aplicativo em Flutter para organizar partidas recreativas de volei com foco em s
 
 - Flutter
 - Dart
-- Arquitetura `feature-first + MVVM`
+- Arquitetura `feature-first + MVVM + Repository`
 - Alvo habilitado: `android`
 
 ## Estrutura
@@ -44,12 +44,16 @@ feature/
   domain/
     entities/
     repositories/
-    usecases/
+    services/
   presentation/
     pages/
     viewmodels/
     widgets/
 ```
+
+`domain/services/` e opcional e deve conter apenas regras de negocio puras.
+O projeto nao usa `domain/usecases/` como padrao. A decisao arquitetural completa
+esta em `docs/ARQUITETURA.md`.
 
 ## Mapeamento do escopo
 

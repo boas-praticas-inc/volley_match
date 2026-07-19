@@ -2,7 +2,7 @@ import 'dart:math';
 
 import '../../../players/domain/entities/player_entity.dart';
 
-class GenerateBalancedTeamsUseCase {
+class BalancedTeamGenerator {
   List<List<PlayerEntity>> call({
     required List<PlayerEntity> players,
     required int teamsCount,
@@ -15,10 +15,7 @@ class GenerateBalancedTeamsUseCase {
       (left, right) => right.skillRating.compareTo(left.skillRating),
     );
 
-    final generatedTeams = List.generate(
-      teamsCount,
-      (_) => <PlayerEntity>[],
-    );
+    final generatedTeams = List.generate(teamsCount, (_) => <PlayerEntity>[]);
 
     var playerIndex = 0;
     final startsForward = randomizer.nextBool();

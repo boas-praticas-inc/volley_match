@@ -6,34 +6,31 @@ import '../../../players/domain/entities/player_entity.dart';
 import '../../data/repositories/team_draw_repository_impl.dart';
 import '../../domain/entities/drawn_team_entity.dart';
 import '../../domain/repositories/team_draw_repository.dart';
-import '../../domain/usecases/generate_balanced_teams_usecase.dart';
-import '../../domain/usecases/save_draw_teams_usecase.dart';
+import '../../domain/services/balanced_team_generator.dart';
 
 class TeamDrawResultViewModel extends ChangeNotifier {
   TeamDrawResultViewModel({
     required List<PlayerEntity> players,
     required int teamsCount,
     required int playersPerTeam,
-    GenerateBalancedTeamsUseCase? generateBalancedTeamsUseCase,
+    BalancedTeamGenerator? balancedTeamGenerator,
     TeamDrawRepository? teamDrawRepository,
     Random? random,
-  }) : _generateBalancedTeamsUseCase =
-           generateBalancedTeamsUseCase ?? GenerateBalancedTeamsUseCase(),
+  }) : _balancedTeamGenerator =
+           balancedTeamGenerator ?? BalancedTeamGenerator(),
        _teamDrawRepository = teamDrawRepository ?? TeamDrawRepositoryImpl(),
        _random = random ?? Random() {
     _players = players;
     _teamsCount = teamsCount;
     _playersPerTeam = playersPerTeam;
-    _saveDrawTeamsUseCase = SaveDrawTeamsUseCase(_teamDrawRepository);
   }
 
   late final List<PlayerEntity> _players;
   late final int _teamsCount;
   late final int _playersPerTeam;
-  final GenerateBalancedTeamsUseCase _generateBalancedTeamsUseCase;
+  final BalancedTeamGenerator _balancedTeamGenerator;
   final TeamDrawRepository _teamDrawRepository;
   final Random _random;
-  late final SaveDrawTeamsUseCase _saveDrawTeamsUseCase;
 
   List<DrawnTeamEntity> _drawnTeams = [];
   int? _eventId;
@@ -152,7 +149,7 @@ class TeamDrawResultViewModel extends ChangeNotifier {
     _notifyListeners();
 
     try {
-      final result = await _saveDrawTeamsUseCase(
+      final result = await _teamDrawRepository.saveDraw(
         teams: _drawnTeams,
         eventId: _eventId,
       );
@@ -191,7 +188,7 @@ class TeamDrawResultViewModel extends ChangeNotifier {
   }
 
   List<DrawnTeamEntity> _buildDrawnTeams({List<String>? preservedNames}) {
-    final generatedTeams = _generateBalancedTeamsUseCase(
+    final generatedTeams = _balancedTeamGenerator(
       players: _players,
       teamsCount: _teamsCount,
       playersPerTeam: _playersPerTeam,

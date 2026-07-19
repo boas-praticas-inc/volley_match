@@ -4,7 +4,6 @@ import '../../../team_draw/domain/entities/drawn_team_entity.dart';
 import '../../data/repositories/event_repository_impl.dart';
 import '../../domain/entities/event_match_configuration_entity.dart';
 import '../../domain/repositories/event_repository.dart';
-import '../../domain/usecases/start_event_match_usecase.dart';
 
 class EventConfigurationViewModel extends ChangeNotifier {
   EventConfigurationViewModel({
@@ -13,7 +12,6 @@ class EventConfigurationViewModel extends ChangeNotifier {
     EventRepository? repository,
   }) : teams = List.unmodifiable(teams),
        _repository = repository ?? EventRepositoryImpl() {
-    _startEventMatchUseCase = StartEventMatchUseCase(_repository);
     _selectedTeamIds.addAll(
       teams.where((team) => team.id != null).take(2).map((team) => team.id!),
     );
@@ -25,7 +23,6 @@ class EventConfigurationViewModel extends ChangeNotifier {
   final int eventId;
   final List<DrawnTeamEntity> teams;
   final EventRepository _repository;
-  late final StartEventMatchUseCase _startEventMatchUseCase;
 
   final List<int> _selectedTeamIds = [];
   int _selectedBestOfSets = 3;
@@ -124,7 +121,7 @@ class EventConfigurationViewModel extends ChangeNotifier {
     _notifyListeners();
 
     try {
-      return await _startEventMatchUseCase(
+      return await _repository.startEventMatch(
         EventMatchConfigurationEntity(
           eventId: eventId,
           homeTeamId: _selectedTeamIds[0],
