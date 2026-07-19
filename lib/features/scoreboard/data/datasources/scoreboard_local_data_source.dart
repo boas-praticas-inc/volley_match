@@ -3,12 +3,17 @@ import 'package:sqflite/sqflite.dart';
 import '../../../../core/database/app_database.dart';
 import '../../../../core/database/database_tables.dart';
 import '../../domain/entities/scoreboard_match_entity.dart';
+import '../../domain/services/match_queue_service.dart';
 
 class ScoreboardLocalDataSource {
-  ScoreboardLocalDataSource({AppDatabase? appDatabase})
-    : _appDatabase = appDatabase ?? AppDatabase.instance;
+  ScoreboardLocalDataSource({
+    AppDatabase? appDatabase,
+    MatchQueueService? matchQueueService,
+  }) : _appDatabase = appDatabase ?? AppDatabase.instance,
+       _matchQueueService = matchQueueService ?? const MatchQueueService();
 
   final AppDatabase _appDatabase;
+  final MatchQueueService _matchQueueService;
 
   Future<Database> get _database async => _appDatabase.database;
 
@@ -287,50 +292,20 @@ class ScoreboardLocalDataSource {
     required String now,
   }) async {
     final eventId = currentMatch['event_id'] as int;
-    final eventTeams = await db.query(
-      DatabaseTables.teams,
-      columns: ['id'],
-      where: 'event_id = ?',
-      whereArgs: [eventId],
-      orderBy: 'id ASC',
-    );
-
-    if (eventTeams.length <= 2) {
-      return null;
-    }
+    final eventTeamIds = await _getEventTeamIds(db, eventId);
 
     final currentMatchId = currentMatch['id'] as int;
-    final currentMatchTeams = await db.query(
-      DatabaseTables.matchTeams,
-      where: 'match_id = ?',
-      whereArgs: [currentMatchId],
-      orderBy: 'draw_order ASC',
-    );
-
-    if (currentMatchTeams.length < 2) {
-      return null;
-    }
-
-    Map<String, Object?>? winnerMatchTeam;
-
-    for (final matchTeam in currentMatchTeams) {
-      if (matchTeam['team_id'] == winnerTeamId) {
-        winnerMatchTeam = matchTeam;
-        break;
-      }
-    }
-
-    if (winnerMatchTeam == null) {
-      return null;
-    }
-
-    final nextTeamId = await _getNextQueuedTeamId(
-      db,
-      eventId: eventId,
+    final nextMatchConfiguration = _matchQueueService.nextMatch(
+      eventTeamIds: eventTeamIds,
+      eventParticipations: await _getEventParticipations(db, eventId),
+      currentMatchParticipations: await _getCurrentMatchParticipations(
+        db,
+        currentMatchId,
+      ),
       winnerTeamId: winnerTeamId,
     );
 
-    if (nextTeamId == null) {
+    if (nextMatchConfiguration == null) {
       return null;
     }
 
@@ -349,77 +324,97 @@ class ScoreboardLocalDataSource {
       'updated_at': now,
     });
 
-    final winnerSide = winnerMatchTeam['side'] as String;
-
-    if (winnerSide == 'home') {
-      await _insertMatchTeam(
-        db,
-        matchId: nextMatchId,
-        teamId: winnerTeamId,
-        side: 'home',
-        drawOrder: 1,
-      );
-      await _insertMatchTeam(
-        db,
-        matchId: nextMatchId,
-        teamId: nextTeamId,
-        side: 'away',
-        drawOrder: 2,
-      );
-    } else {
-      await _insertMatchTeam(
-        db,
-        matchId: nextMatchId,
-        teamId: nextTeamId,
-        side: 'home',
-        drawOrder: 1,
-      );
-      await _insertMatchTeam(
-        db,
-        matchId: nextMatchId,
-        teamId: winnerTeamId,
-        side: 'away',
-        drawOrder: 2,
-      );
-    }
+    await _insertMatchTeam(
+      db,
+      matchId: nextMatchId,
+      teamId: nextMatchConfiguration.homeTeamId,
+      side: 'home',
+      drawOrder: 1,
+    );
+    await _insertMatchTeam(
+      db,
+      matchId: nextMatchId,
+      teamId: nextMatchConfiguration.awayTeamId,
+      side: 'away',
+      drawOrder: 2,
+    );
 
     return nextMatchId;
   }
 
-  Future<int?> _getNextQueuedTeamId(
-    DatabaseExecutor db, {
-    required int eventId,
-    required int winnerTeamId,
-  }) async {
+  Future<List<int>> _getEventTeamIds(DatabaseExecutor db, int eventId) async {
+    final eventTeams = await db.query(
+      DatabaseTables.teams,
+      columns: ['id'],
+      where: 'event_id = ?',
+      whereArgs: [eventId],
+      orderBy: 'id ASC',
+    );
+
+    return eventTeams.map((team) => team['id'] as int).toList();
+  }
+
+  Future<List<MatchQueueTeamParticipation>> _getEventParticipations(
+    DatabaseExecutor db,
+    int eventId,
+  ) async {
     final result = await db.rawQuery(
       '''
       SELECT
-        teams.id,
-        (
-          SELECT MAX(match_teams.match_id)
-          FROM ${DatabaseTables.matchTeams} match_teams
-          INNER JOIN ${DatabaseTables.matches} matches
-            ON matches.id = match_teams.match_id
-          WHERE match_teams.team_id = teams.id
-            AND matches.event_id = ?
-        ) AS last_match_id
-      FROM ${DatabaseTables.teams} teams
-      WHERE teams.event_id = ?
-        AND teams.id != ?
+        match_teams.match_id,
+        match_teams.team_id,
+        match_teams.side
+      FROM ${DatabaseTables.matchTeams} match_teams
+      INNER JOIN ${DatabaseTables.matches} matches
+        ON matches.id = match_teams.match_id
+      WHERE matches.event_id = ?
       ORDER BY
-        CASE WHEN last_match_id IS NULL THEN 0 ELSE 1 END ASC,
-        last_match_id ASC,
-        teams.id ASC
-      LIMIT 1
+        match_teams.match_id ASC,
+        match_teams.draw_order ASC
       ''',
-      [eventId, eventId, winnerTeamId],
+      [eventId],
     );
 
-    if (result.isEmpty) {
-      return null;
+    return _participationsFromRows(result);
+  }
+
+  Future<List<MatchQueueTeamParticipation>> _getCurrentMatchParticipations(
+    DatabaseExecutor db,
+    int matchId,
+  ) async {
+    final result = await db.query(
+      DatabaseTables.matchTeams,
+      columns: ['match_id', 'team_id', 'side'],
+      where: 'match_id = ?',
+      whereArgs: [matchId],
+      orderBy: 'draw_order ASC',
+    );
+
+    return _participationsFromRows(result);
+  }
+
+  List<MatchQueueTeamParticipation> _participationsFromRows(
+    List<Map<String, Object?>> rows,
+  ) {
+    final participations = <MatchQueueTeamParticipation>[];
+
+    for (final row in rows) {
+      final side = MatchQueueSide.fromValue(row['side'] as String);
+
+      if (side == null) {
+        continue;
+      }
+
+      participations.add(
+        MatchQueueTeamParticipation(
+          matchId: row['match_id'] as int,
+          teamId: row['team_id'] as int,
+          side: side,
+        ),
+      );
     }
 
-    return result.first['id'] as int;
+    return participations;
   }
 
   Future<void> _insertMatchTeam(
