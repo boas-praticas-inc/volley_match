@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../../event/presentation/pages/event_configuration_page.dart';
@@ -109,9 +110,10 @@ class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: viewModel,
-      builder: (context, _) {
+    return ChangeNotifierProvider<TeamDrawResultViewModel>.value(
+      value: viewModel,
+      child: Consumer<TeamDrawResultViewModel>(
+      builder: (context, viewModel, _) {
         final filteredTeams = viewModel.filteredTeams;
 
         return Scaffold(
@@ -188,6 +190,7 @@ class _TeamDrawResultPageState extends State<TeamDrawResultPage> {
           ),
         );
       },
+      ),
     );
   }
 }

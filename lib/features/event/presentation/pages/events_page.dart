@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/router/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -51,10 +52,11 @@ class _EventsPageState extends State<EventsPage> {
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      body: AnimatedBuilder(
-        animation: viewModel,
-        builder: (context, _) {
-          return Padding(
+      body: ChangeNotifierProvider<EventsViewModel>.value(
+        value: viewModel,
+        child: Consumer<EventsViewModel>(
+          builder: (context, viewModel, _) {
+            return Padding(
             padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,7 +117,8 @@ class _EventsPageState extends State<EventsPage> {
               ],
             ),
           );
-        },
+          },
+        ),
       ),
     );
   }

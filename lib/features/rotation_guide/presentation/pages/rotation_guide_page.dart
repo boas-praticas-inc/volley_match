@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../viewmodels/rotation_guide_viewmodel.dart';
 import '../widgets/rotation_empty_state.dart';
 import '../widgets/rotation_mode_content.dart';
@@ -45,9 +46,10 @@ class _RotationGuidePageState extends State<RotationGuidePage> {
     return Scaffold(
       backgroundColor: _backgroundColor,
       body: SafeArea(
-        child: AnimatedBuilder(
-          animation: viewModel,
-          builder: (context, _) {
+        child: ChangeNotifierProvider<RotationGuideViewModel>.value(
+          value: viewModel,
+          child: Consumer<RotationGuideViewModel>(
+          builder: (context, viewModel, _) {
             if (viewModel.isLoading) {
               return const Center(
                 child: CircularProgressIndicator(color: Colors.white),
@@ -80,6 +82,7 @@ class _RotationGuidePageState extends State<RotationGuidePage> {
               onClose: _close,
             );
           },
+          ),
         ),
       ),
     );

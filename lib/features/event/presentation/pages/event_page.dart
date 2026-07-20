@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../../../core/router/app_routes.dart';
@@ -217,9 +218,10 @@ class _EventPageState extends State<EventPage> {
           ),
         ],
       ),
-      body: AnimatedBuilder(
-        animation: viewModel,
-        builder: (context, _) {
+      body: ChangeNotifierProvider<EventViewModel>.value(
+        value: viewModel,
+        child: Consumer<EventViewModel>(
+          builder: (context, viewModel, _) {
           if (viewModel.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -309,7 +311,8 @@ class _EventPageState extends State<EventPage> {
               ],
             ),
           );
-        },
+          },
+        ),
       ),
     );
   }

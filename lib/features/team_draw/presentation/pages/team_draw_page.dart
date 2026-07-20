@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../../../shared/widgets/feature_nav_bar.dart';
@@ -47,10 +48,11 @@ class _TeamDrawPageState extends State<TeamDrawPage> {
     return FeatureNavBar(
       indiceAtual: 2,
       appBar: AppBar(title: const Text('Sorteio de times')),
-      body: AnimatedBuilder(
-        animation: viewModel,
-        builder: (context, _) {
-          return Padding(
+      body: ChangeNotifierProvider<TeamDrawViewModel>.value(
+        value: viewModel,
+        child: Consumer<TeamDrawViewModel>(
+          builder: (context, viewModel, _) {
+            return Padding(
             padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -126,7 +128,8 @@ class _TeamDrawPageState extends State<TeamDrawPage> {
               ],
             ),
           );
-        },
+          },
+        ),
       ),
     );
   }

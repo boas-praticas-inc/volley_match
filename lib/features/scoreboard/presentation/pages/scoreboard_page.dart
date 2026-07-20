@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:volley_match/core/router/app_routes.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 import 'package:volley_match/features/rotation_guide/presentation/pages/rotation_guide_page.dart';
@@ -103,9 +104,10 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: viewModel,
-      builder: (context, _) {
+    return ChangeNotifierProvider<ScoreboardViewModel>.value(
+      value: viewModel,
+      child: Consumer<ScoreboardViewModel>(
+      builder: (context, viewModel, _) {
         return OrientationBuilder(
           builder: (context, orientation) {
             if (orientation == Orientation.landscape && viewModel.hasMatch) {
@@ -147,6 +149,7 @@ class _ScoreboardPageState extends State<ScoreboardPage> {
           },
         );
       },
+      ),
     );
   }
 }

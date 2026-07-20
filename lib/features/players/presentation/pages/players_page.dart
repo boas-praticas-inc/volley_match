@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../../../core/router/app_routes.dart';
@@ -64,10 +65,11 @@ class _PlayersPageState extends State<PlayersPage> {
         backgroundColor: AppColors.primary,
         child: const Icon(Icons.add, color: Colors.white),
       ),
-      body: AnimatedBuilder(
-        animation: viewModel,
-        builder: (context, _) {
-          return Padding(
+      body: ChangeNotifierProvider<PlayersViewModel>.value(
+        value: viewModel,
+        child: Consumer<PlayersViewModel>(
+          builder: (context, viewModel, _) {
+            return Padding(
             padding: const EdgeInsets.fromLTRB(20, 2, 20, 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -118,7 +120,8 @@ class _PlayersPageState extends State<PlayersPage> {
               ],
             ),
           );
-        },
+          },
+        ),
       ),
     );
   }

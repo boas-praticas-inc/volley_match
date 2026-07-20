@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:volley_match/core/theme/app_colors.dart';
 
 import '../../../scoreboard/presentation/pages/scoreboard_page.dart';
@@ -71,9 +72,10 @@ class _EventConfigurationPageState extends State<EventConfigurationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: viewModel,
-      builder: (context, _) {
+    return ChangeNotifierProvider<EventConfigurationViewModel>.value(
+      value: viewModel,
+      child: Consumer<EventConfigurationViewModel>(
+      builder: (context, viewModel, _) {
         return Scaffold(
           appBar: AppBar(title: const Text('Configurar evento')),
           body: Padding(
@@ -179,6 +181,7 @@ class _EventConfigurationPageState extends State<EventConfigurationPage> {
           ),
         );
       },
+      ),
     );
   }
 }

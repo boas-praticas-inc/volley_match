@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/router/app_routes.dart';
@@ -53,24 +54,26 @@ class _HomePageState extends State<HomePage> {
     return FeatureNavBar(
       indiceAtual: 0,
       appBar: AppBar(title: Text(AppStrings.appName)),
-      body: AnimatedBuilder(
-        animation: viewModel,
-        builder: (context, _) {
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              HomeQuickActions(onStartMatchTap: _openTeamDraw),
-              const SizedBox(height: 20),
-              HomeRecentEventsSection(
-                events: viewModel.recentEvents,
-                isLoading: viewModel.isLoadingRecentEvents,
-                errorMessage: viewModel.recentEventsErrorMessage,
-                onSeeAllTap: _openEvents,
-                onEventTap: _openEvent,
-              ),
-            ],
-          );
-        },
+      body: ChangeNotifierProvider<HomeViewModel>.value(
+        value: viewModel,
+        child: Consumer<HomeViewModel>(
+          builder: (context, viewModel, _) {
+            return ListView(
+              padding: const EdgeInsets.all(20),
+              children: [
+                HomeQuickActions(onStartMatchTap: _openTeamDraw),
+                const SizedBox(height: 20),
+                HomeRecentEventsSection(
+                  events: viewModel.recentEvents,
+                  isLoading: viewModel.isLoadingRecentEvents,
+                  errorMessage: viewModel.recentEventsErrorMessage,
+                  onSeeAllTap: _openEvents,
+                  onEventTap: _openEvent,
+                ),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
