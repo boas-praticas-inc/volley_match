@@ -2,6 +2,8 @@ class DatabaseTables {
   static const events = 'events';
   static const matches = 'matches';
   static const sets = 'sets';
+  static const liveSets = 'live_sets';
+  static const pointEvents = 'point_events';
   static const players = 'players';
   static const teams = 'teams';
   static const matchTeams = 'match_teams';

@@ -1,0 +1,69 @@
+class ScoreboardMatchEntity {
+  const ScoreboardMatchEntity({
+    required this.matchId,
+    required this.eventId,
+    required this.homeTeam,
+    required this.awayTeam,
+    required this.startedAt,
+    required this.finishedAt,
+    required this.bestOfSets,
+    required this.setsToWin,
+    required this.pointsPerSet,
+    required this.status,
+    required this.completedSets,
+  });
+
+  final int matchId;
+  final int eventId;
+  final ScoreboardTeamEntity homeTeam;
+  final ScoreboardTeamEntity awayTeam;
+  final DateTime startedAt;
+  final DateTime? finishedAt;
+  final int bestOfSets;
+  final int setsToWin;
+  final int pointsPerSet;
+  final String status;
+  final List<ScoreboardSetEntity> completedSets;
+}
+
+class ScoreboardTeamEntity {
+  const ScoreboardTeamEntity({
+    required this.id,
+    required this.name,
+    this.players = const [],
+  });
+
+  final int id;
+  final String name;
+  final List<ScoreboardPlayerEntity> players;
+}
+
+class ScoreboardPlayerEntity {
+  const ScoreboardPlayerEntity({
+    required this.id,
+    required this.name,
+    required this.position,
+    required this.rotationOrder,
+    this.photoPath,
+  });
+
+  final int id;
+  final String name;
+  final String position;
+  final int? rotationOrder;
+  final String? photoPath;
+}
+
+class ScoreboardSetEntity {
+  const ScoreboardSetEntity({
+    required this.number,
+    required this.homeScore,
+    required this.awayScore,
+    required this.winnerTeamId,
+  });
+
+  final int number;
+  final int homeScore;
+  final int awayScore;
+  final int winnerTeamId;
+}

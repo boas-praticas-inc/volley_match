@@ -2,121 +2,68 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 
-class HomeQuickActions extends StatelessWidget{
-  const HomeQuickActions({
-    super.key,
-    required this.onNewDrawTap,
-    required this.onStartMatchTap,
-});
+class HomeQuickActions extends StatelessWidget {
+  const HomeQuickActions({super.key, required this.onStartMatchTap});
 
-  final VoidCallback onNewDrawTap;
   final VoidCallback onStartMatchTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(
-          child: InkWell(
-            borderRadius: BorderRadius.circular(24),
-            onTap: onNewDrawTap,
-            child: Ink(
-              decoration: BoxDecoration(
-                color: AppColors.quickActionDraw,
-                borderRadius: BorderRadius.circular(24),
+    return InkWell(
+      borderRadius: BorderRadius.circular(24),
+      onTap: onStartMatchTap,
+      child: Ink(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: AppColors.quickActionDraw,
+          borderRadius: BorderRadius.circular(24),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.quickActionOverlay,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.emoji_events_outlined,
+                  color: Colors.white,
+                ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
+              const SizedBox(width: 16),
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: AppColors.quickActionOverlay,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.shuffle,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Novo Sorteio',
+                    Text(
+                      'Novo Evento',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Sortear times',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
+                    SizedBox(height: 6),
+                    Text(
+                      'Sortear times e configurar evento',
+                      style: TextStyle(color: Colors.white70, fontSize: 14),
                     ),
                   ],
                 ),
               ),
-            ),
+              const Icon(
+                Icons.arrow_forward_rounded,
+                color: Colors.white,
+                size: 28,
+              ),
+            ],
           ),
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: InkWell(
-            borderRadius: BorderRadius.circular(24),
-            onTap: onStartMatchTap,
-            child: Ink(
-              decoration: BoxDecoration(
-                color: AppColors.quickActionMatch,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: AppColors.quickActionOverlay,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.emoji_events_outlined,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Iniciar Partida',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    const Text(
-                      'Placar ao vivo',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
-
 }

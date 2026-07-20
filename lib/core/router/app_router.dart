@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 
 import '../../features/event/presentation/pages/event_page.dart';
+import '../../features/event/presentation/pages/events_page.dart';
 import '../../features/home/presentation/pages/home_page.dart';
 import '../../features/match/presentation/pages/match_page.dart';
+import '../../features/players/presentation/pages/add_player_page.dart';
+import '../../features/players/presentation/pages/edit_player_page.dart';
+import '../../features/players/domain/entities/player_entity.dart';
 import '../../features/players/presentation/pages/players_page.dart';
 import '../../features/rotation_guide/presentation/pages/rotation_guide_page.dart';
 import '../../features/scoreboard/presentation/pages/scoreboard_page.dart';
@@ -16,14 +20,30 @@ class AppRouter {
         return MaterialPageRoute(builder: (_) => const HomePage());
       case AppRoutes.players:
         return MaterialPageRoute(builder: (_) => const PlayersPage());
+      case AppRoutes.addPlayer:
+        final nextPlayerId = settings.arguments as int;
+        return MaterialPageRoute(
+          builder: (_) => AddPlayerPage(nextPlayerId: nextPlayerId),
+        );
+      case AppRoutes.editPlayer:
+        final player = settings.arguments as PlayerEntity;
+        return MaterialPageRoute(
+          builder: (_) => EditPlayerPage(player: player),
+        );
       case AppRoutes.teamDraw:
         return MaterialPageRoute(builder: (_) => const TeamDrawPage());
       case AppRoutes.scoreboard:
         return MaterialPageRoute(builder: (_) => const ScoreboardPage());
       case AppRoutes.rotationGuide:
-        return MaterialPageRoute(builder: (_) => const RotationGuidePage());
+        final matchId = settings.arguments as int?;
+        return MaterialPageRoute(
+          builder: (_) => RotationGuidePage(matchId: matchId),
+        );
       case AppRoutes.events:
-        return MaterialPageRoute(builder: (_) => const EventPage());
+        return MaterialPageRoute(builder: (_) => const EventsPage());
+      case AppRoutes.eventDetails:
+        final eventId = settings.arguments as int?;
+        return MaterialPageRoute(builder: (_) => EventPage(eventId: eventId));
       case AppRoutes.matches:
         return MaterialPageRoute(builder: (_) => const MatchPage());
       default:
