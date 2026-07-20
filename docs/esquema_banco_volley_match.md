@@ -242,35 +242,3 @@ CREATE INDEX idx_match_points_set_id ON match_points(set_id);
 7. `sets`
 8. `match_points`
 9. indices
-
-## Prompt reutilizavel
-
-Use este texto em outros prompts:
-
-```text
-Estou desenvolvendo um app Flutter chamado Volley Match, com SQLite local via sqflite. O app gerencia jogadores, eventos/babas, sorteio equilibrado de times, partidas, placar por sets e historico.
-
-Use a seguinte modelagem como base:
-
-- players: id, name, position, skill_rating, photo_path, is_active, created_at, updated_at.
-- events: id, name, description, event_date, location, status, created_at, updated_at.
-- teams: id, event_id, name, color, origin, created_at.
-- player_teams: id, team_id, player_id, is_present, is_captain, rotation_order, assigned_position, created_at.
-- matches: id, event_id, scheduled_at, started_at, finished_at, status, winner_team_id, sets_to_win, best_of_sets, notes, created_at, updated_at.
-- match_teams: id, match_id, team_id, side, draw_order.
-- sets: id, match_id, set_number, home_team_id, away_team_id, home_score, away_score, winner_team_id, is_tiebreak, finished_at.
-- match_points: id, match_id, set_id, sequence_number, scoring_team_id, home_score_after, away_score_after, event_type, created_at.
-
-Regras importantes:
-- players sao globais.
-- events agrupam times e partidas.
-- teams pertencem a um event.
-- player_teams associa jogadores aos times.
-- matches pertencem a um event.
-- match_teams define os dois times da partida usando side = home ou away.
-- sets guarda o placar dos dois times no mesmo registro.
-- match_points e opcional, usado quando houver placar ponto a ponto.
-- resultado textual da partida deve ser calculado a partir de sets e winner_team_id, nao salvo apenas como string.
-
-Mantenha compatibilidade com arquitetura feature-first + MVVM do projeto.
-```
